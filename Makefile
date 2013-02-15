@@ -1,9 +1,23 @@
 PKG_CONFIG=`pkg-config --cflags --libs gtk+-2.0`
 CC=/usr/bin/gcc -g -Wall
 LDFLAGS=$(PKG_CONFIG)
-OUT=./bin
+OUT=./out
+
+all: readmaze sample
 
 SRC = sample.c
-sample: $(SRC)
-	mkdir -p $(OUT)
+sample: $(SRC) out
 	$(CC) $(SRC) -o $(OUT)/sample $(LDFLAGS)
+
+readmaze: readmaze.c out
+	$(CC) readmaze.c -o $(OUT)/readmaze $(LDFLAGS)
+PHONY += readmaze
+
+out:
+	mkdir -p $(OUT)
+
+clean:
+	rm -rf ./out
+
+.PHONY: $(PHONY)
+
