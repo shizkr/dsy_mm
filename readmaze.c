@@ -162,9 +162,13 @@ void draw_contour(char *maze, char *map)
 
 int main(int argc, char *argv[])
 {
-	printf("%s\n", argv[0]);
-	printf("%s\n", argv[1]);
-	load_maze(argv[1], maze_file);
+	if (argc < 2) {
+		printf("Usage: %s [maz file]\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
+	if (load_maze(argv[1], maze_file))
+		exit(EXIT_FAILURE);
 
 	printf("load maze\n");
 	print_map(maze_file);

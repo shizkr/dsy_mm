@@ -18,6 +18,7 @@ out:
 
 clean:
 	rm -rf ./out
+	rm cscope*
 
 .PHONY: $(PHONY)
 
