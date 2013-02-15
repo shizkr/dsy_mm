@@ -10,7 +10,7 @@ sample: $(SRC) out
 	$(CC) $(SRC) -o $(OUT)/sample $(LDFLAGS)
 
 readmaze: readmaze.c out
-	$(CC) readmaze.c -o $(OUT)/readmaze $(LDFLAGS)
+	$(CC) circular_buffer.c readmaze.c -o $(OUT)/readmaze $(LDFLAGS)
 PHONY += readmaze
 
 out:
