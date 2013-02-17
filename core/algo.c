@@ -71,11 +71,20 @@ void print_map(char *map)
 void print_map(char *map) { }
 #endif
 
-void draw_contour(char *maze, char *map)
+/* function name: draw_contour
+ * Input Parameter
+ *   maze : maze array wich has maze information
+ *   map  : array to draw contour map
+ *   type : maze type to run mouse
+ *   pos  : current mouse location in the maze
+ */
+void draw_contour(char *maze, char *map,
+		enum SEARCH_TYPE type, unsigned char pos)
 {
 	#define BUFFER_SIZE 64
 	int i, contour_lvl = 1;
 	int index, item;
+	char found_mouse = 0;
 	int buffer[BUFFER_SIZE];
 	struct circular_buffer *cb, contour_buffer;
 
@@ -86,18 +95,40 @@ void draw_contour(char *maze, char *map)
 	memset(map, 0, MAZEMAX);
 
 	/* Seed value 1 as a goal */
-	map[get_index(7, 7)] = contour_lvl;
-	map[get_index(8, 7)] = contour_lvl;
-	map[get_index(7, 8)] = contour_lvl;
-	map[get_index(8, 8)] = contour_lvl;
+	switch (type) {
+	case TO_GOAL_4X4:
+		map[get_index(3, 3)] = contour_lvl;
+		circular_buffer_write(cb, gen_contour_pos(contour_lvl, 0x33));
+		break;
+	case TO_GOAL_8X8:
+		map[get_index(7, 7)] = contour_lvl;
+		circular_buffer_write(cb, gen_contour_pos(contour_lvl, 0x77));
+		break;
+	case TO_GOAL_16X16:
+		map[get_index(7, 7)] = contour_lvl;
+		map[get_index(8, 7)] = contour_lvl;
+		map[get_index(7, 8)] = contour_lvl;
+		map[get_index(8, 8)] = contour_lvl;
 
-	/* Add list of same level contour value */
-	circular_buffer_write(cb, gen_contour_pos(contour_lvl, 0x77));
-	circular_buffer_write(cb, gen_contour_pos(contour_lvl, 0x78));
-	circular_buffer_write(cb, gen_contour_pos(contour_lvl, 0x87));
-	circular_buffer_write(cb, gen_contour_pos(contour_lvl, 0x88));
+		/* Add list of same level contour value */
+		circular_buffer_write(cb, gen_contour_pos(contour_lvl, 0x77));
+		circular_buffer_write(cb, gen_contour_pos(contour_lvl, 0x78));
+		circular_buffer_write(cb, gen_contour_pos(contour_lvl, 0x87));
+		circular_buffer_write(cb, gen_contour_pos(contour_lvl, 0x88));
+		break;
+	case TO_START_4X4:
+	case TO_START_8X8:
+	case TO_START_16X16:
+		map[get_index(0, 0)] = contour_lvl;
+		circular_buffer_write(cb, gen_contour_pos(contour_lvl, 0x00));
+		break;
+	default:
+		print_exit("Unsupported mouse search type %d!!",
+				type);
+		break;
+	}
 
-	while (!circular_buffer_empty(cb)) {
+	while (!circular_buffer_empty(cb) && !found_mouse) {
 		circular_buffer_read(cb, &item);
 		index = get_contour_index(item);
 		contour_lvl = get_contour_lvl(item) + 1;
@@ -110,6 +141,8 @@ void draw_contour(char *maze, char *map)
 				circular_buffer_write(cb,
 					gen_contour_pos(contour_lvl,
 					index + maze_dxy[i]));
+				if (index + maze_dxy[i] == pos)
+					found_mouse = 1;
 			}
 		}
 
@@ -121,6 +154,11 @@ void draw_contour(char *maze, char *map)
 #endif
 	}
 
+	if (!found_mouse) {
+		/* Mouse alorighm should never hit this location */
+		print_exit("%s couldn't find mouse location\n",
+				__func__);
+	}
 }
 
 static int gen_bin_tree_tail(char *maze, char *map,
@@ -161,7 +199,8 @@ static int gen_bin_tree_tail(char *maze, char *map,
 				is_goal = 1;
 		}
 	}
-	debug_sl_node(tail_new_list);
+	if (tail_new_list)
+		debug_sl_node(tail_new_list);
 
 #ifdef DEBUG
 	if (is_goal) {
@@ -198,7 +237,7 @@ static int gen_bin_tree_tail(char *maze, char *map,
  * map: contour maze array pointer
  * pos_st: current mouse position x/y 8 bit index
  */
-void gen_bin_tree(char *maze, char *map, unsigned char pos_st)
+struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st)
 {
 	struct btree_node *bt_node;
 	struct s_link *sl_node, *tail_list = NULL;
@@ -226,4 +265,5 @@ void gen_bin_tree(char *maze, char *map, unsigned char pos_st)
 		printf("%02X\n", bt_node->pos);
 	}
 #endif
+	return tail_list;
 }

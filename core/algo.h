@@ -50,6 +50,16 @@
 #define absolute_direction(curr_dir, rel_dir) \
 	(((curr_dir)+(rel_dir)) & 3)
 
+/* MAZE SEARCH TYPE */
+enum SEARCH_TYPE {
+	TO_GOAL_4X4,
+	TO_START_4X4,
+	TO_GOAL_8X8,
+	TO_START_8X8,
+	TO_GOAL_16X16,
+	TO_START_16X16
+};
+
 extern char maze_search[MAZEMAX];
 extern char contour_map[MAZEMAX];
 
@@ -62,11 +72,12 @@ void initialize_maze(char *maze);
 
 void print_map(char *map);
 
-void draw_contour(char *maze, char *map);
+void draw_contour(char *maze, char *map,
+		enum SEARCH_TYPE type, unsigned char pos);
 
 /* maze: maze array pointer
  * map: contour maze array pointer
  * pos_st: current mouse position x/y 8 bit index
  */
-void gen_bin_tree(char *maze, char *map, unsigned char pos_st);
+struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st);
 #endif
