@@ -45,6 +45,7 @@ int load_maze(char *filename, char *maze)
 int main(int argc, char *argv[])
 {
 	unsigned char cur_mouse_pos = 0x00;
+	unsigned char cur_mouse_dir = NI;
 
 	print_dbg(DEBUG_PRINT, "Start main\n");
 
@@ -66,7 +67,7 @@ int main(int argc, char *argv[])
 	gen_bin_tree(maze_search, contour_map, 0);
 #endif
 	draw_contour(maze_file, contour_map, TO_GOAL_16X16, cur_mouse_pos);
-	gen_bin_tree(maze_file, contour_map, cur_mouse_pos);
+	gen_bin_tree(maze_file, contour_map, cur_mouse_pos, cur_mouse_dir);
 
 
 	exit(EXIT_SUCCESS);

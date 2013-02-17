@@ -12,6 +12,7 @@
 struct btree_node {
 	unsigned char pos;		/* maze map position */
 	unsigned char dir;		/* direction of left and right child tree */
+	unsigned char abs_dir;	/* current mouse absolute direction */
 	struct btree_node *parent;
 	struct btree_node *left;
 	struct btree_node *right;
@@ -22,7 +23,7 @@ struct s_link {
 	struct s_link *node;
 };
 
-struct btree_node *bt_node_alloc(unsigned char pos);
+struct btree_node *bt_node_alloc(unsigned char pos, unsigned char abs_dir);
 void add_bt_node(struct btree_node *node, struct btree_node *new_node);
 struct s_link *s_link_alloc(struct btree_node *bt_node);
 void add_sl_node(struct s_link **list, struct s_link *node);

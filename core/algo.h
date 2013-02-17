@@ -41,7 +41,7 @@
  * result: forward(0), right(1), back(2) and left(3)
  */
 #define relative_direction(curr, next) \
-	((4+(next))-(curr) & 3)
+	(((4+(next))-(curr))&3)
 
 /* r_dir: relative direction of FRBL
  * curr_dir: current mouse direction
@@ -79,5 +79,6 @@ void draw_contour(char *maze, char *map,
  * map: contour maze array pointer
  * pos_st: current mouse position x/y 8 bit index
  */
-struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st);
+struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
+		unsigned char abs_dir);
 #endif

@@ -17,10 +17,11 @@ static int bt_node_cnt;
 static int s_link_cnt;
 #endif
 
-struct btree_node *bt_node_alloc(unsigned char pos)
+struct btree_node *bt_node_alloc(unsigned char pos, unsigned char abs_dir)
 {
 	struct btree_node *node = malloc(sizeof(struct btree_node));
 	node->pos = pos;
+	node->abs_dir = abs_dir;
 	node->parent = NULL;
 	node->left = NULL;
 	node->right = NULL;

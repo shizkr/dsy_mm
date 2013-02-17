@@ -167,7 +167,7 @@ static int gen_bin_tree_tail(char *maze, char *map,
 	struct btree_node *bt_new_node, *bt_node;
 	struct s_link *sl_node;
 	struct s_link *sl_new_node, *tail_new_list = NULL;
-	unsigned char i, index;
+	unsigned char i, index, abs_dir;
 	char is_goal = 0;
 
 	if (!maze || !map || !head)
@@ -180,11 +180,23 @@ static int gen_bin_tree_tail(char *maze, char *map,
 	/* Find next lower contour cube arond current location */
 	for (sl_node = *head; sl_node; sl_node = sl_node->node) {
 		index = sl_node->bt_node->pos;
+		abs_dir = sl_node->bt_node->abs_dir;
 		bt_node = sl_node->bt_node;
 		for (i = NI; i <= WI; i++) {
 			if (!(maze[index] & wall_bit(i)) &&
 				(map[index] == map[index + maze_dxy[i]] + 1)) {
-				bt_new_node = bt_node_alloc(index+maze_dxy[i]);
+				/* create new bt_node and save next mouse index
+				 * and absolute direction of mouse at next block
+				 */
+				bt_new_node =
+					bt_node_alloc(index+maze_dxy[i], i);
+
+				/* Next bt_node->dir is to save how mouse made
+				 * a turn to come the block.
+				 */
+				bt_new_node->dir =
+					relative_direction(abs_dir, i);
+
 				add_bt_node(bt_node, bt_new_node);
 
 				sl_new_node = s_link_alloc(bt_new_node);
@@ -237,13 +249,14 @@ static int gen_bin_tree_tail(char *maze, char *map,
  * map: contour maze array pointer
  * pos_st: current mouse position x/y 8 bit index
  */
-struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st)
+struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
+		unsigned char abs_dir)
 {
 	struct btree_node *bt_node;
 	struct s_link *sl_node, *tail_list = NULL;
 
 	/* Init first node from current mouse location */
-	contour_tree = bt_node_alloc(pos_st);
+	contour_tree = bt_node_alloc(pos_st, abs_dir);
 	tail_list = s_link_alloc(contour_tree);
 
 	/* Generate binary tree until it finds goals of maze */
@@ -263,6 +276,24 @@ struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st)
 			bt_node = bt_node->parent;
 		}
 		printf("%02X\n", bt_node->pos);
+	}
+
+	/* Print of the direction of mouse path. All pathes has
+	 * LRBF only from start to goal and it'll be used for pattern
+	 * analysis to find the fastest path.
+	 */
+	for (sl_node = tail_list; sl_node; sl_node = sl_node->node) {
+		bt_node = sl_node->bt_node;
+		while (bt_node->parent) {
+			/* printf("%02X", bt_node->dir); */
+			printf("%C",
+					(bt_node->dir == FD) ? 'F' : \
+					((bt_node->dir == RD) ? 'R' : \
+					((bt_node->dir == BD) ? 'B' : \
+					((bt_node->dir == LD) ? 'L' : 'X'))));
+			bt_node = bt_node->parent;
+		}
+		printf("\n");
 	}
 #endif
 	return tail_list;
