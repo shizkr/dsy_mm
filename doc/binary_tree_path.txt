@@ -1,0 +1,37 @@
+* binary tree data structure(BTDS)
+------------------------------------------------------------
+BTDS is an efficient way to save all possible mouse pathes from
+current mouse position to the goal. This document explains how
+to save each position and direction to BTDS node.
+Based on contour algorithm, mouse will have only two next blocks
+from the current location to reach the goal. BTDS is enough to
+handle all pathes.
+
+First node: first node has current mouse position information and
+            when it has two way to go, it creates two BTDS node.
+            Below example shows the structure. Current position
+            is X(0) and Y(1). Let's assume the mouse can go to
+            two blocks and next block can be (0,2) and (1,1).
+            to go to block(0,2), mouse has to go forward and make
+            right turn for block(1,1).
+
+Other node will follow the same rule until it reaches to the goal.
+
+                 +-------------+
+                 | pos (0,1)   |
+                 | direction X |
+                 |             |
+                 |             |
+                 | left  right |
+                 +--+-------+--+
+                    |       |
+              +-----+       +----------------+
+              |                              |
+      +-------+-----+                +-------+-----+
+      | pos (0,2)   |                | pos (1,1)   |
+      | direction F |                | direction R |
+      |             |                |             |
+      |             |                |             |
+      | left  right |                | left  right |
+      +-------------+                +-------------+
+         |       |                      |       |
