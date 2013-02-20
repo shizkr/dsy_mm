@@ -6,6 +6,7 @@
 #include "circular_buffer.h"
 #include "bin_tree.h"
 #include "algo.h"
+#include "diagonal.h"
 
 #define TAG "ALGO: "
 #include "debug.h"
@@ -300,3 +301,54 @@ struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 #endif
 	return tail_list;
 }
+
+void find_fastest_path(struct s_link *pathes)
+{
+	struct btree_node *bt_node, *tail_bt_node;
+	struct s_link *sl_node;
+	int idx, size, pttn_size;
+	unsigned int time, total_time;
+	unsigned char path[256];
+
+	for (sl_node = pathes; sl_node; sl_node = sl_node->node) {
+		tail_bt_node = bt_node = sl_node->bt_node;
+		idx = 255;
+		while (bt_node->parent) {
+			if (bt_node->dir <= LD)
+				path[idx--] = bt_node->dir;
+			else
+				print_exit("Invalid direction in bt_node!\n");
+			bt_node = bt_node->parent;
+		}
+
+		total_time = 0;
+		size = 2;
+		idx++;
+		while (idx < 255) {
+			pttn_size = 256 - idx;
+			if (pttn_size < size)
+				print_exit("Invalid diag pattern size\n");
+
+			do {
+				time = diagonal_pattern_search(&path[idx], size);
+
+				if (!time) {
+					size++;
+					if (size > 30)
+						print_exit(
+							"Error on path finding!\n");
+				} else {
+					total_time += time;
+					idx += (size - 1);
+					size = 2;
+					break;
+				}
+			} while (1);
+		}
+		tail_bt_node->time = total_time; /* total time */
+
+		printf("Total_time: %d\n", total_time);
+	}
+}
+
+

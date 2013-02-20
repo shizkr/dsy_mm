@@ -16,6 +16,10 @@ struct btree_node {
 	struct btree_node *parent;
 	struct btree_node *left;
 	struct btree_node *right;
+	int time;
+#ifdef DEBUG
+	int node_num;
+#endif
 };
 
 struct s_link {

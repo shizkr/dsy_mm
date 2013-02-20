@@ -25,9 +25,11 @@ struct btree_node *bt_node_alloc(unsigned char pos, unsigned char abs_dir)
 	node->parent = NULL;
 	node->left = NULL;
 	node->right = NULL;
+	node->time = 0;
 
 #ifdef DEBUG
 	bt_node_cnt++;
+	node->node_num = bt_node_cnt;
 	print_dbg(DEBUG_BINTREE, "Allocated bt node %d\n",
 			bt_node_cnt);
 #endif

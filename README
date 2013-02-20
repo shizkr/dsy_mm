@@ -1,2 +1,4 @@
 * Next work
-- add test code to verify diagonal pattern analsis
+- add diagonal pattern array from the fastest path
+- end point of bt diag node tree should have pattern number for mouse action
+- add pattern F15 and D27 to calcualte it.

@@ -10,7 +10,7 @@
 
 #ifdef DEBUG
 static int debug_flag;
-/* DEBUG_DIAGNODE */
+/* = DEBUG_DIAGNODE; */
 #endif
 
 /* This structure defines the patterns of

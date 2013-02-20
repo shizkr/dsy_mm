@@ -82,4 +82,5 @@ void draw_contour(char *maze, char *map,
  */
 struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 		unsigned char abs_dir);
+void find_fastest_path(struct s_link *pathes);
 #endif
