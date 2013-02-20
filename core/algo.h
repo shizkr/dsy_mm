@@ -20,6 +20,7 @@
 #define RD	1
 #define BD	2
 #define LD	3
+#define NOD 4  /* Invalid direction */
 
 #define MAX_X	15
 #define MAX_Y	15

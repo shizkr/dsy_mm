@@ -7,14 +7,16 @@
 #include "bin_tree.h"
 #include "algo.h"
 
-#define TAG "readmaze: "
+#define TAG "ALGO: "
 #include "debug.h"
 
 /*
  * Varialbles
  */
 #ifdef DEBUG
-static int debug_flag = DEBUG_BINTREE | DEBUG_S_LINK;
+static int debug_flag;
+
+/* DEBUG_BINTREE | DEBUG_S_LINK; */
 #endif
 
 /* Memorize maze information */
@@ -269,6 +271,7 @@ struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 	/* verify output of binary tree, each path has unique
 	 * path to current mouse location.
 	 */
+	printf("Possible path from start to goal\n");
 	for (sl_node = tail_list; sl_node; sl_node = sl_node->node) {
 		bt_node = sl_node->bt_node;
 		while (bt_node->parent) {
@@ -285,7 +288,6 @@ struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 	for (sl_node = tail_list; sl_node; sl_node = sl_node->node) {
 		bt_node = sl_node->bt_node;
 		while (bt_node->parent) {
-			/* printf("%02X", bt_node->dir); */
 			printf("%C",
 					(bt_node->dir == FD) ? 'F' : \
 					((bt_node->dir == RD) ? 'R' : \

@@ -7,6 +7,7 @@
 #define DEBUG_CONTOUR	0x0004
 #define DEBUG_BINTREE	0x0008
 #define DEBUG_S_LINK	0x0010
+#define DEBUG_DIAGNODE	0x0020
 #define DEBUG_VORBOSE	0x8000
 
 #define DEBUG_LEVEL \
@@ -19,11 +20,11 @@
 
 #ifdef DEBUG
 #define print_dbg(flag, fmt, ...) \
-{ \
+({ \
 	if (!flag || (flag & DEBUG_VORBOSE) || \
 		(flag & debug_flag)) \
 		printf(TAG fmt, ##__VA_ARGS__); \
-}
+})
 
 #else
 #define print_dbg(flag, fmt, ...) { }
@@ -35,9 +36,9 @@
 	printf(TAG "ERROR:" fmt, ##__VA_ARGS__);
 
 #define print_exit(fmt, ...) \
-{ \
+({ \
 	printf(TAG fmt, ##__VA_ARGS__); \
 	exit(EXIT_FAILURE); \
-}
+})
 
 #endif

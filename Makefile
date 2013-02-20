@@ -9,7 +9,8 @@ all: simulator sample
 
 CORE_SRC = core/bin_tree.c \
 		   core/circular_buffer.c \
-		   core/algo.c
+		   core/algo.c \
+		   core/diagonal.c
 
 SRC = sample.c
 sample: $(SRC) out

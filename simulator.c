@@ -6,6 +6,7 @@
 #include "circular_buffer.h"
 #include "bin_tree.h"
 #include "algo.h"
+#include "diagonal.h"
 
 #define TAG "simul: "
 #include "debug.h"
@@ -69,6 +70,7 @@ int main(int argc, char *argv[])
 	draw_contour(maze_file, contour_map, TO_GOAL_16X16, cur_mouse_pos);
 	gen_bin_tree(maze_file, contour_map, cur_mouse_pos, cur_mouse_dir);
 
+	diagonal_pattern_tree_init(default_load_time);
 
 	exit(EXIT_SUCCESS);
 }

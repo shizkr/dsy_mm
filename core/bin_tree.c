@@ -8,7 +8,7 @@
 #include "debug.h"
 
 #ifdef DEBUG
-static int debug_flag = DEBUG_S_LINK | DEBUG_BINTREE;
+static int debug_flag;
 #endif
 
 #ifdef DEBUG
