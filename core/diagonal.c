@@ -142,7 +142,8 @@ static struct diagonal_node *diag_node_alloc(void)
 }
 
 static void diagonal_pattern_tree_add(struct diagonal_node **list,
-	struct diagonal_type *diag_item, unsigned int time)
+	struct diagonal_type *diag_item,
+	unsigned int *time_table, int idx)
 {
 	struct diagonal_node *diag_node, *new_diag_node;
 	int i, j;
@@ -155,7 +156,7 @@ static void diagonal_pattern_tree_add(struct diagonal_node **list,
 			((diag_item->pttn[i] == BD) ? 'B' : \
 			((diag_item->pttn[i] == LD) ? 'L' : 'X'))));
 	}
-	print_dbg(DEBUG_DIAGNODE, "req time: %d\n", time);
+	print_dbg(DEBUG_DIAGNODE, "req time: %d\n", time_table[idx]);
 #endif
 
 	/* Allocate node and add to the list */
@@ -198,9 +199,11 @@ static void diagonal_pattern_tree_add(struct diagonal_node **list,
 			if (i+1 == diag_item->size) {
 				diag_node->link[diag_item->pttn[i]] =
 					new_diag_node;
-				new_diag_node->time = time;
+				new_diag_node->pttn.time = time_table[idx];
+				new_diag_node->pttn.pttn = idx;
+
 				print_dbg(DEBUG_DIAGNODE, "Found pattern,time: %d\n",
-				time);
+				time_table[idx]);
 
 			} else {
 				diag_node->link[diag_item->pttn[i]] =
@@ -214,12 +217,14 @@ static void diagonal_pattern_tree_add(struct diagonal_node **list,
 static int diagonal_pattern_tree_verify(void)
 {
 	int i, idx;
+	struct diag_pttn_time_type *pttn;
 	unsigned int time;
 	unsigned char pattern[32];
 
 	for (i = 0; i < P_MAX; i++) {
-		time = diagonal_pattern_search(pattern_table[i].pttn,
+		pttn = diagonal_pattern_search(pattern_table[i].pttn,
 				pattern_table[i].size);
+		time = pttn->time;
 		if (time != 0)
 			print_dbg(DEBUG_DIAGNODE, "Found: time: %d\n", time);
 		else
@@ -230,7 +235,8 @@ static int diagonal_pattern_tree_verify(void)
 	memset(pattern, FD, sizeof(pattern));
 	for (idx = SL_F3, i = 3; idx <= SL_F15;
 			idx++, i++) {
-		time = diagonal_pattern_search(pattern, i);
+		pttn = diagonal_pattern_search(pattern, i);
+		time = pttn->time;
 		if (time != 0)
 			print_dbg(DEBUG_DIAGNODE, "Found: time: %d\n", time);
 		else
@@ -246,7 +252,8 @@ static int diagonal_pattern_tree_verify(void)
 	}
 	for (idx = SL_D2, i = 3; idx <= SL_D27;
 			idx++, i++) {
-		time = diagonal_pattern_search(pattern, i);
+		pttn = diagonal_pattern_search(pattern, i);
+		time = pttn->time;
 		if (time != 0)
 			print_dbg(DEBUG_DIAGNODE, "Found: time: %d\n", time);
 		else
@@ -262,7 +269,8 @@ static int diagonal_pattern_tree_verify(void)
 	}
 	for (idx = SL_D2, i = 3; idx <= SL_D27;
 			idx++, i++) {
-		time = diagonal_pattern_search(pattern, i);
+		pttn = diagonal_pattern_search(pattern, i);
+		time = pttn->time;
 		if (time != 0)
 			print_dbg(DEBUG_DIAGNODE, "Found: time: %d\n", time);
 		else
@@ -291,7 +299,8 @@ void diagonal_pattern_tree_init(unsigned int *load_time)
 					__func__);
 
 		/* create nodes and add to the list */
-		diagonal_pattern_tree_add(list, diag_item, load_time[i]);
+		diagonal_pattern_tree_add(list, diag_item,
+				load_time, i);
 	}
 
 	/* Add forward path as maximum 15 */
@@ -303,7 +312,8 @@ void diagonal_pattern_tree_init(unsigned int *load_time)
 		diag_item->size = i;
 
 		/* create nodes and add to the list */
-		diagonal_pattern_tree_add(list, diag_item, load_time[idx]);
+		diagonal_pattern_tree_add(list, diag_item,
+				load_time, idx);
 	}
 
 	/* Add diagonal forward path  RLRL... as maximum 27 */
@@ -319,7 +329,8 @@ void diagonal_pattern_tree_init(unsigned int *load_time)
 		diag_item->size = i;
 
 		/* create nodes and add to the list */
-		diagonal_pattern_tree_add(list, diag_item, load_time[idx]);
+		diagonal_pattern_tree_add(list, diag_item,
+				load_time, idx);
 	}
 
 	/* Add diagonal forward path  LRLR... as maximum 27 */
@@ -335,7 +346,8 @@ void diagonal_pattern_tree_init(unsigned int *load_time)
 		diag_item->size = i;
 
 		/* create nodes and add to the list */
-		diagonal_pattern_tree_add(list, diag_item, load_time[idx]);
+		diagonal_pattern_tree_add(list, diag_item,
+				load_time, idx);
 	}
 	free(diag_item);
 
@@ -343,7 +355,7 @@ void diagonal_pattern_tree_init(unsigned int *load_time)
 		print_exit("%s is failed!!!\n", __func__);
 }
 
-unsigned int diagonal_pattern_search(
+struct diag_pttn_time_type *diagonal_pattern_search(
 		unsigned char *pattern, int pttn_size)
 {
 	int i;
@@ -383,11 +395,11 @@ unsigned int diagonal_pattern_search(
 	print_dbg(DEBUG_DIAGNODE,
 		"node:%X, time:%d, 0:%X, 1:%X, 2:%X, 3:%X\n",
 		(unsigned int)diag_node,
-		diag_node->time,
+		diag_node->pttn.time,
 		(unsigned int)diag_node->link[0],
 		(unsigned int)diag_node->link[1],
 		(unsigned int)diag_node->link[2],
 		(unsigned int)diag_node->link[3]);
-	return diag_node->time;
+	return &diag_node->pttn;
 }
 

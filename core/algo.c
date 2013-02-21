@@ -302,13 +302,17 @@ struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 	return tail_list;
 }
 
-void find_fastest_path(struct s_link *pathes)
+void find_fastest_path(struct s_link *pathes,
+		unsigned char *f_path)
 {
 	struct btree_node *bt_node, *tail_bt_node;
 	struct s_link *sl_node;
 	int idx, size, pttn_size;
-	unsigned int time, total_time;
+	unsigned int time, total_time, fast_time;
 	unsigned char path[256];
+	int i, diag_idx;
+	enum speed_load_enum diag_path[128];
+	struct diag_pttn_time_type *pttn;
 
 	for (sl_node = pathes; sl_node; sl_node = sl_node->node) {
 		tail_bt_node = bt_node = sl_node->bt_node;
@@ -321,16 +325,23 @@ void find_fastest_path(struct s_link *pathes)
 			bt_node = bt_node->parent;
 		}
 
+		/* diagonal path has to go 1 more block in the goal */
+		path[idx--] = FD;
+
 		total_time = 0;
+		fast_time = 0xffffffff;
 		size = 2;
 		idx++;
+		diag_idx = 0;
 		while (idx < 255) {
 			pttn_size = 256 - idx;
 			if (pttn_size < size)
 				print_exit("Invalid diag pattern size\n");
 
 			do {
-				time = diagonal_pattern_search(&path[idx], size);
+				pttn = diagonal_pattern_search(
+						&path[idx], size);
+				time = pttn->time;
 
 				if (!time) {
 					size++;
@@ -339,16 +350,32 @@ void find_fastest_path(struct s_link *pathes)
 							"Error on path finding!\n");
 				} else {
 					total_time += time;
+
+					diag_path[diag_idx++] = pttn->pttn;
+					if (diag_idx >= 128)
+						print_exit("%s:Increase diag path " \
+								"array size!\n", __func__);
 					idx += (size - 1);
 					size = 2;
 					break;
 				}
 			} while (1);
 		}
-		tail_bt_node->time = total_time; /* total time */
+		tail_bt_node->time = total_time;
+
+		if (total_time < fast_time) {
+			fast_time = total_time;
+			for (i = 0; i < diag_idx; i++)
+				f_path[i] =
+					(unsigned char)diag_path[i];
+			f_path[i] = 0xff;
+		}
 
 		printf("Total_time: %d\n", total_time);
 	}
-}
 
+	if (fast_time == 0xffffffff)
+		print_exit("%s: Couldn't find the fastest path!\n",
+				__func__);
+}
 

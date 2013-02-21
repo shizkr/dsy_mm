@@ -1,6 +1,8 @@
 #ifndef ALGO_H
 #define ALGO_H
 
+#include "diagonal.h"
+
 #define MAZEMAX 256
 
 /*
@@ -82,5 +84,6 @@ void draw_contour(char *maze, char *map,
  */
 struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 		unsigned char abs_dir);
-void find_fastest_path(struct s_link *pathes);
+void find_fastest_path(struct s_link *pathes,
+		unsigned char *f_path);
 #endif

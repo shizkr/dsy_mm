@@ -89,9 +89,14 @@ struct diagonal_type {
 	unsigned char size;
 };
 
+struct diag_pttn_time_type {
+	enum speed_load_enum pttn;
+	unsigned int time;
+};
+
 struct diagonal_node {
 	struct diagonal_node *link[4];
-	unsigned int time;
+	struct diag_pttn_time_type pttn;
 #ifdef DEBUG
 	int node_num;
 #endif
@@ -101,6 +106,7 @@ struct diagonal_node {
 extern unsigned int default_load_time[SL_MAX];
 
 void diagonal_pattern_tree_init(unsigned int *load_time);
-unsigned int diagonal_pattern_search(unsigned char *pattern, int pttn_size);
+struct diag_pttn_time_type *diagonal_pattern_search(unsigned char *pattern,
+		int pttn_size);
 
 #endif

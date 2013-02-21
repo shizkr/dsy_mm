@@ -48,6 +48,7 @@ int main(int argc, char *argv[])
 	unsigned char cur_mouse_pos = 0x00;
 	unsigned char cur_mouse_dir = NI;
 	struct s_link *mouse_path;
+	unsigned char f_path[128], i;
 
 	print_dbg(DEBUG_PRINT, "Start main\n");
 
@@ -67,14 +68,20 @@ int main(int argc, char *argv[])
 	print_map(maze_search);
 
 #if 0
-	draw_contour(maze_search, contour_map);
-	gen_bin_tree(maze_search, contour_map, 0);
-#endif
+	draw_contour(maze_search, contour_map, TO_GOAL_16X16, cur_mouse_pos);
+	mouse_path = gen_bin_tree(maze_search,
+			contour_map, cur_mouse_pos, cur_mouse_dir);
+#else
 	draw_contour(maze_file, contour_map, TO_GOAL_16X16, cur_mouse_pos);
 	mouse_path = gen_bin_tree(maze_file,
 			contour_map, cur_mouse_pos, cur_mouse_dir);
+#endif
 
-	find_fastest_path(mouse_path);
+	find_fastest_path(mouse_path, f_path);
+
+	for (i = 0; f_path[i] != 0xff; i++)
+		printf("%02X", f_path[i]);
+	printf("\n");
 
 	exit(EXIT_SUCCESS);
 }
