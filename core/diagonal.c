@@ -190,6 +190,7 @@ static void diagonal_pattern_tree_add(struct diagonal_node **list,
 			}
 		}
 
+		/* if pattern doesn't exist, create new node */
 		if (new_diag_node == NULL) {
 			new_diag_node = diag_node_alloc();
 			if (new_diag_node == NULL)

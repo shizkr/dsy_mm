@@ -308,7 +308,7 @@ void find_fastest_path(struct s_link *pathes,
 	struct btree_node *bt_node, *tail_bt_node;
 	struct s_link *sl_node;
 	int idx, size, pttn_size;
-	unsigned int time, total_time, fast_time;
+	unsigned int time, total_time, fast_time = 0xffffffff;
 	unsigned char path[256];
 	int i, diag_idx;
 	enum speed_load_enum diag_path[128];
@@ -317,6 +317,8 @@ void find_fastest_path(struct s_link *pathes,
 	for (sl_node = pathes; sl_node; sl_node = sl_node->node) {
 		tail_bt_node = bt_node = sl_node->bt_node;
 		idx = 255;
+		/* diagonal path has to go 1 more block in the goal */
+		path[idx--] = FD;
 		while (bt_node->parent) {
 			if (bt_node->dir <= LD)
 				path[idx--] = bt_node->dir;
@@ -325,11 +327,7 @@ void find_fastest_path(struct s_link *pathes,
 			bt_node = bt_node->parent;
 		}
 
-		/* diagonal path has to go 1 more block in the goal */
-		path[idx--] = FD;
-
 		total_time = 0;
-		fast_time = 0xffffffff;
 		size = 2;
 		idx++;
 		diag_idx = 0;
@@ -339,6 +337,15 @@ void find_fastest_path(struct s_link *pathes,
 				print_exit("Invalid diag pattern size\n");
 
 			do {
+				/* generate FF... patthern */
+				if (path[idx] == FD &&
+					path[idx+1] == FD) {
+					i = 1;
+					while (path[idx+1+i] == FD) {
+						size++;
+						i++;
+					}
+				}
 				pttn = diagonal_pattern_search(
 						&path[idx], size);
 				time = pttn->time;
