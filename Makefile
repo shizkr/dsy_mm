@@ -16,6 +16,7 @@ CORE_SRC = core/bin_tree.c \
 SIMUL_SRC = simulation/simulator.c $(CORE_SRC)
 simul: $(SIMUL_SRC)
 	$(CC) $(SIMUL_SRC) -o simul $(LDFLAGS)
+	@rm gentable
 PHONY += simul
 
 # graphical full simulator
@@ -33,8 +34,8 @@ gentable:
 PHONY += gentable
 
 clean:
-	rm -f simul sample gentable
-	rm -f cscope*
+	@rm -f simul sample gentable
+	@rm -f cscope*
 
 .PHONY: $(PHONY)
 

@@ -38,15 +38,15 @@ void initialize_maze(char *maze)
 {
 	int x, y;
 
-	for (x = 0; x <= MAX_X; x++) {
-		for (y = 0; y <= MAX_Y; y++) {
+	for (x = 0; x < MAX_X; x++) {
+		for (y = 0; y < MAX_Y; y++) {
 			if (x == 0)
 				maze[get_index(x, y)] |= WEST;
 			if (y == 0)
 				maze[get_index(x, y)] |= SOUTH;
-			if (x == MAX_X)
+			if (x == MAX_X - 1)
 				maze[get_index(x, y)] |= EAST;
-			if (y == MAX_Y)
+			if (y == MAX_Y - 1)
 				maze[get_index(x, y)] |= NORTH;
 		}
 	}
@@ -56,14 +56,14 @@ void initialize_maze(char *maze)
 
 #ifdef DEBUG
 /* Draw maze information or contour map.
- * Map must be 256 bytes.
+ * Map must be MAZEMAX bytes.
  */
 void print_map(char *map)
 {
 	int x, y;
 
-	for (y = MAX_Y; y >= 0; y--) {
-		for (x = 0; x <= MAX_X; x++)
+	for (y = MAX_Y - 1; y >= 0; y--) {
+		for (x = 0; x < MAX_X; x++)
 			printf("%02X", map[get_index(x, y)]);
 		printf("\n");
 	}
@@ -259,7 +259,7 @@ struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 	struct btree_node *bt_node;
 	struct s_link *sl_node;
 	int idx;
-	unsigned char path[256];
+	unsigned char path[MAZEMAX + 1];
 #endif
 
 	/* Init first node from current mouse location */
@@ -305,7 +305,7 @@ struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 		}
 
 		idx++;
-		while (idx < 256) {
+		while (idx < MAZEMAX) {
 			printf("%C",
 				(path[idx] == FD) ? 'F' : \
 				((path[idx] == RD) ? 'R' : \
@@ -319,118 +319,215 @@ struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 	return tail_list;
 }
 
-void find_fastest_path(struct s_link *pathes,
-		unsigned char *f_path)
+unsigned char *gen_frbl_from_node(struct s_link *sl_node)
 {
-	struct btree_node *bt_node, *tail_bt_node;
-	struct s_link *sl_node;
-	int idx, size, pttn_size;
-	unsigned int time, total_time, fast_time = 0xffffffff;
-	unsigned char path[256];
+	int idx;
+	struct btree_node *bt_node;
+	static unsigned char path[MAZEMAX + 1];
+
+	bt_node = sl_node->bt_node;
+	idx = MAZEMAX;
+
+	/*
+	 * Generate FRBL pattern and save it to array
+	 */
+
+	/* diagonal path has to go 1 more block in the goal */
+	path[idx--] = 0xff; /* end of path */
+	path[idx--] = FD;
+	while (bt_node->parent) {
+		if (bt_node->dir <= LD)
+			path[idx--] = bt_node->dir;
+		else
+			print_exit("Invalid direction in bt_node!\n");
+		bt_node = bt_node->parent;
+	}
+	return &path[++idx];
+}
+
+int get_diag_path_from_node(struct s_link *node, int *diag_path)
+{
+	unsigned char *path;
+
+	path = gen_frbl_from_node(node);
+
+	return get_diag_path_from_turn(path, diag_path);
+}
+
+int get_diag_path_from_turn(unsigned char *path, int *diag_path)
+{
+	int idx = 0, size;
+	unsigned int time;
 	int i, diag_idx;
+	struct diag_pttn_time_type *pttn;
+
+	/*
+	 * Start searching diagonal pattern from FRBL array
+	 */
+	for (idx = 0, size = 2, diag_idx = 0;
+		(path[idx] <= LD) && (path[idx+1]) <= LD;) {
+		do {
+			/* generate FF... upto 15F pattern */
+			if (path[idx] == FD &&
+				path[idx+1] == FD) {
+				i = 1;
+				while (path[idx+1+i] == FD) {
+					size++;
+					i++;
+				}
+			}
+			/* generate LR...upto 27D pattern */
+			if (path[idx] == LD &&
+				path[idx+1] == RD) {
+				i = 1;
+				do {
+					if ((i&1) && (path[idx+1+i] != LD))
+						break;
+					if (!(i&1) && (path[idx+1+i] != RD))
+						break;
+					size++;
+					i++;
+				} while (1);
+			}
+
+			/* generate RL...upto 27D pattern */
+			if (path[idx] == RD &&
+				path[idx+1] == LD) {
+				i = 1;
+				do {
+					if ((i&1) && (path[idx+1+i] != RD))
+						break;
+					if (!(i&1) && (path[idx+1+i] != LD))
+						break;
+					size++;
+					i++;
+				} while (1);
+			}
+
+			pttn = diagonal_pattern_search(
+					&path[idx], size);
+			time = pttn->time;
+
+			if (!time) {
+				size++;
+				if (size > MAZEMAX/9 + 4)
+					print_exit(
+					"Error on path finding!\n");
+			} else {
+				/*
+				total_time += time;
+				*/
+				diag_path[diag_idx++] = pttn->pttn;
+				if (diag_idx >= 128)
+					print_exit(
+					"%s:Increase diag path " \
+					"array size!\n", __func__);
+				idx += (size - 1);
+				size = 2;
+				break;
+			}
+		} while (1);
+	}
+
+	diag_path[diag_idx] = 0xff;
+	if (diag_idx == 0)
+		return -1;
+
+	return 0;
+}
+
+int calculate_path_time(unsigned char *path)
+{
+	int idx = 0, size;
+	unsigned int time, total_time = 0;
+	int i, diag_idx = 0;
 	enum speed_load_enum diag_path[128];
 	struct diag_pttn_time_type *pttn;
 
-	for (sl_node = pathes; sl_node; sl_node = sl_node->node) {
-		tail_bt_node = bt_node = sl_node->bt_node;
-		idx = 255;
-
-		/*
-		 * Generate FRBL pattern and save it to array
-		 */
-
-		/* diagonal path has to go 1 more block in the goal */
-		path[idx--] = FD;
-		while (bt_node->parent) {
-			if (bt_node->dir <= LD)
-				path[idx--] = bt_node->dir;
-			else
-				print_exit("Invalid direction in bt_node!\n");
-			bt_node = bt_node->parent;
-		}
-
-		/*
-		 * Start searching diagonal pattern from FRBL array
-		 */
-		total_time = 0;
-		size = 2;
-		idx++;
-		diag_idx = 0;
-		while (idx < 255) {
-			pttn_size = 256 - idx;
-			if (pttn_size < size)
-				print_exit("Invalid diag pattern size\n");
-
-			do {
-				/* generate FF... upto 15F pattern */
-				if (path[idx] == FD &&
-					path[idx+1] == FD) {
-					i = 1;
-					while (path[idx+1+i] == FD) {
-						size++;
-						i++;
-					}
-				}
-				/* generate LR...upto 27D pattern */
-				if (path[idx] == LD &&
-					path[idx+1] == RD) {
-					i = 1;
-					do {
-						if ((i&1) && (path[idx+1+i] != LD))
-							break;
-						if (!(i&1) && (path[idx+1+i] != RD))
-							break;
-						size++;
-						i++;
-					} while (1);
-				}
-
-				/* generate RL...upto 27D pattern */
-				if (path[idx] == RD &&
-					path[idx+1] == LD) {
-					i = 1;
-					do {
-						if ((i&1) && (path[idx+1+i] != RD))
-							break;
-						if (!(i&1) && (path[idx+1+i] != LD))
-							break;
-						size++;
-						i++;
-					} while (1);
-				}
-
-				pttn = diagonal_pattern_search(
-						&path[idx], size);
-				time = pttn->time;
-
-				if (!time) {
+	/*
+	 * Start searching diagonal pattern from FRBL array
+	 */
+	for (idx = 0, size = 2;
+		(path[idx] <= LD) && (path[idx+1]) <= LD;) {
+		do {
+			/* generate FF... upto 15F pattern */
+			if (path[idx] == FD &&
+				path[idx+1] == FD) {
+				i = 1;
+				while (path[idx+1+i] == FD) {
 					size++;
-					if (size > 30)
-						print_exit(
-							"Error on path finding!\n");
-				} else {
-					total_time += time;
-
-					diag_path[diag_idx++] = pttn->pttn;
-					if (diag_idx >= 128)
-						print_exit(
-						"%s:Increase diag path " \
-						"array size!\n", __func__);
-					idx += (size - 1);
-					size = 2;
-					break;
+					i++;
 				}
-			} while (1);
-		}
-		tail_bt_node->time = total_time;
+			}
+			/* generate LR...upto 27D pattern */
+			if (path[idx] == LD &&
+				path[idx+1] == RD) {
+				i = 1;
+				do {
+					if ((i&1) && (path[idx+1+i] != LD))
+						break;
+					if (!(i&1) && (path[idx+1+i] != RD))
+						break;
+					size++;
+					i++;
+				} while (1);
+			}
+
+			/* generate RL...upto 27D pattern */
+			if (path[idx] == RD &&
+				path[idx+1] == LD) {
+				i = 1;
+				do {
+					if ((i&1) && (path[idx+1+i] != RD))
+						break;
+					if (!(i&1) && (path[idx+1+i] != LD))
+						break;
+					size++;
+					i++;
+				} while (1);
+			}
+
+			pttn = diagonal_pattern_search(
+					&path[idx], size);
+			time = pttn->time;
+
+			if (!time) {
+				size++;
+				if (size > MAZEMAX/9 + 4)
+					print_exit(
+					"Error on path finding!\n");
+			} else {
+				total_time += time;
+
+				diag_path[diag_idx++] = pttn->pttn;
+				if (diag_idx >= 128)
+					print_exit(
+					"%s:Increase diag path " \
+					"array size!\n", __func__);
+				idx += (size - 1);
+				size = 2;
+				break;
+			}
+		} while (1);
+	}
+	return total_time;
+}
+
+struct s_link *find_fastest_path(struct s_link *pathes)
+{
+	struct s_link *sl_node, *fast_sl_node;
+	unsigned int total_time, fast_time = 0xffffffff;
+	unsigned char *path;
+
+	for (sl_node = pathes; sl_node; sl_node = sl_node->node) {
+		path = gen_frbl_from_node(sl_node);
+		total_time = calculate_path_time(path);
+		sl_node->bt_node->time = total_time;
 
 		/* Keep the fastest path */
 		if (total_time < fast_time) {
 			fast_time = total_time;
-			for (i = 0; i < diag_idx; i++)
-				f_path[i] =
-					(unsigned char)diag_path[i];
-			f_path[i] = 0xff;
+			fast_sl_node = sl_node;
 		}
 	}
 
@@ -438,5 +535,7 @@ void find_fastest_path(struct s_link *pathes,
 	if (fast_time == 0xffffffff)
 		print_exit("%s: Couldn't find the fastest path!\n",
 				__func__);
+
+	return fast_sl_node;
 }
 

@@ -47,8 +47,8 @@ int main(int argc, char *argv[])
 {
 	unsigned char cur_mouse_pos = 0x00;
 	unsigned char cur_mouse_dir = NI;
-	struct s_link *mouse_path;
-	unsigned char f_path[128], i;
+	struct s_link *mouse_path, *f_node;
+	int diag_path[128], i;
 
 	print_dbg(DEBUG_PRINT, "Start main\n");
 
@@ -77,10 +77,12 @@ int main(int argc, char *argv[])
 			contour_map, cur_mouse_pos, cur_mouse_dir);
 #endif
 
-	find_fastest_path(mouse_path, f_path);
+	f_node = find_fastest_path(mouse_path);
 
-	for (i = 0; f_path[i] != 0xff; i++)
-		printf("%02X", f_path[i]);
+	get_diag_path_from_node(f_node, diag_path);
+
+	for (i = 0; diag_path[i] != 0xff; i++)
+		printf("%02X", diag_path[i]);
 	printf("\n");
 
 	exit(EXIT_SUCCESS);

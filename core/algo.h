@@ -24,8 +24,8 @@
 #define LD	3
 #define NOD 4  /* Invalid direction */
 
-#define MAX_X	15
-#define MAX_Y	15
+#define MAX_X	16
+#define MAX_Y	16
 
 /* direction bit through direction index */
 #define wall_bit(direct) (0x01 << (direct))
@@ -84,6 +84,9 @@ void draw_contour(char *maze, char *map,
  */
 struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 		unsigned char abs_dir);
-void find_fastest_path(struct s_link *pathes,
-		unsigned char *f_path);
+unsigned char *gen_frbl_from_node(struct s_link *sl_node);
+int get_diag_path_from_node(struct s_link *node, int *diag_path);
+int get_diag_path_from_turn(unsigned char *path, int *diag_path);
+int calculate_path_time(unsigned char *path);
+struct s_link *find_fastest_path(struct s_link *pathes);
 #endif
