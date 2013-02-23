@@ -48,7 +48,6 @@ void initialize_maze(char *maze)
 				maze[get_index(x, y)] |= EAST;
 			if (y == MAX_Y)
 				maze[get_index(x, y)] |= NORTH;
-
 		}
 	}
 
@@ -317,6 +316,11 @@ void find_fastest_path(struct s_link *pathes,
 	for (sl_node = pathes; sl_node; sl_node = sl_node->node) {
 		tail_bt_node = bt_node = sl_node->bt_node;
 		idx = 255;
+
+		/*
+		 * Generate FRBL pattern and save it to array
+		 */
+
 		/* diagonal path has to go 1 more block in the goal */
 		path[idx--] = FD;
 		while (bt_node->parent) {
@@ -327,6 +331,9 @@ void find_fastest_path(struct s_link *pathes,
 			bt_node = bt_node->parent;
 		}
 
+		/*
+		 * Start searching diagonal pattern from FRBL array
+		 */
 		total_time = 0;
 		size = 2;
 		idx++;
@@ -337,7 +344,7 @@ void find_fastest_path(struct s_link *pathes,
 				print_exit("Invalid diag pattern size\n");
 
 			do {
-				/* generate FF... patthern */
+				/* generate FF... upto 15F pattern */
 				if (path[idx] == FD &&
 					path[idx+1] == FD) {
 					i = 1;
@@ -346,6 +353,34 @@ void find_fastest_path(struct s_link *pathes,
 						i++;
 					}
 				}
+				/* generate LR...upto 27D pattern */
+				if (path[idx] == LD &&
+					path[idx+1] == RD) {
+					i = 1;
+					do {
+						if ((i&1) && (path[idx+1+i] != LD))
+							break;
+						if (!(i&1) && (path[idx+1+i] != RD))
+							break;
+						size++;
+						i++;
+					} while (1);
+				}
+
+				/* generate RL...upto 27D pattern */
+				if (path[idx] == RD &&
+					path[idx+1] == LD) {
+					i = 1;
+					do {
+						if ((i&1) && (path[idx+1+i] != RD))
+							break;
+						if (!(i&1) && (path[idx+1+i] != LD))
+							break;
+						size++;
+						i++;
+					} while (1);
+				}
+
 				pttn = diagonal_pattern_search(
 						&path[idx], size);
 				time = pttn->time;
@@ -360,8 +395,9 @@ void find_fastest_path(struct s_link *pathes,
 
 					diag_path[diag_idx++] = pttn->pttn;
 					if (diag_idx >= 128)
-						print_exit("%s:Increase diag path " \
-								"array size!\n", __func__);
+						print_exit(
+						"%s:Increase diag path " \
+						"array size!\n", __func__);
 					idx += (size - 1);
 					size = 2;
 					break;
@@ -370,6 +406,7 @@ void find_fastest_path(struct s_link *pathes,
 		}
 		tail_bt_node->time = total_time;
 
+		/* Keep the fastest path */
 		if (total_time < fast_time) {
 			fast_time = total_time;
 			for (i = 0; i < diag_idx; i++)
