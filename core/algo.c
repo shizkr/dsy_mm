@@ -256,6 +256,10 @@ struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 {
 	struct btree_node *bt_node;
 	struct s_link *sl_node, *tail_list = NULL;
+#ifdef DEBUG
+	int idx;
+	unsigned char path[256];
+#endif
 
 	/* Init first node from current mouse location */
 	contour_tree = bt_node_alloc(pos_st, abs_dir);
@@ -287,13 +291,26 @@ struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 	 */
 	for (sl_node = tail_list; sl_node; sl_node = sl_node->node) {
 		bt_node = sl_node->bt_node;
+		idx = 255;
+
+		/* diagonal path has to go 1 more block in the goal */
+		path[idx--] = FD;
 		while (bt_node->parent) {
-			printf("%C",
-					(bt_node->dir == FD) ? 'F' : \
-					((bt_node->dir == RD) ? 'R' : \
-					((bt_node->dir == BD) ? 'B' : \
-					((bt_node->dir == LD) ? 'L' : 'X'))));
+			if (bt_node->dir <= LD)
+				path[idx--] = bt_node->dir;
+			else
+				print_exit("Invalid direction in bt_node!\n");
 			bt_node = bt_node->parent;
+		}
+
+		idx++;
+		while (idx < 256) {
+			printf("%C",
+				(path[idx] == FD) ? 'F' : \
+				((path[idx] == RD) ? 'R' : \
+				((path[idx] == BD) ? 'B' : \
+				((path[idx] == LD) ? 'L' : 'X'))));
+			idx++;
 		}
 		printf("\n");
 	}
@@ -415,7 +432,7 @@ void find_fastest_path(struct s_link *pathes,
 			f_path[i] = 0xff;
 		}
 
-		printf("Total_time: %d\n", total_time);
+		printf("Total_time: %dmS\n", total_time);
 	}
 
 	if (fast_time == 0xffffffff)
