@@ -61,7 +61,7 @@ int main(int argc, char *argv[])
 	print_info("loaded maze file\n");
 	print_map(maze_file);
 
-	diagonal_pattern_tree_init(default_load_time);
+	diagonal_pattern_tree_init(load_time_1);
 
 	print_info("Initialized maze\n");
 	initialize_maze(maze_search);

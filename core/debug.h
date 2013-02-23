@@ -26,12 +26,13 @@
 		printf(TAG fmt, ##__VA_ARGS__); \
 })
 
-#else
-#define print_dbg(flag, fmt, ...) { }
-#endif
-
 #define print_info(fmt, ...) \
 	printf(TAG fmt, ##__VA_ARGS__);
+#else
+#define print_dbg(flag, fmt, ...) ({ })
+#define print_info(fmt, ...) ({ }) 
+#endif
+
 #define print_error(fmt, ...) \
 	printf(TAG "ERROR:" fmt, ##__VA_ARGS__);
 

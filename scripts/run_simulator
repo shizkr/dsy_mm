@@ -1,7 +1,7 @@
 #!/bin/bash
 
-./out/simulator ./maz/jap21_1.maz
-./out/simulator ./maz/jap21_2.maz
-./out/simulator ./maz/maze2003-1.maz
-./out/simulator ./maz/maze2003.maz
+./simul ./maz/jap21_1.maz
+./simul ./maz/jap21_2.maz
+./simul ./maz/maze2003-1.maz
+./simul ./maz/maze2003.maz
 

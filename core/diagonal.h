@@ -104,6 +104,7 @@ struct diagonal_node {
 
 /* default diagonal speed load per pattern */
 extern unsigned int default_load_time[SL_MAX];
+extern unsigned int load_time_1[];
 
 void diagonal_pattern_tree_init(unsigned int *load_time);
 struct diag_pttn_time_type *diagonal_pattern_search(unsigned char *pattern,

@@ -1,35 +1,40 @@
 PKG_CONFIG=`pkg-config --cflags --libs gtk+-2.0`
 CC=/usr/bin/gcc -g -Wall
 CINCLUDE = -Icore
-CFLAGS = -DDEBUG
+CFLAGS =
 LDFLAGS=$(PKG_CONFIG) $(CFLAGS) $(CINCLUDE)
-OUT=./out
 
-all: simulator sample gentable
+all: simul sample gentable
 
 CORE_SRC = core/bin_tree.c \
 		   core/circular_buffer.c \
 		   core/algo.c \
+		   core/load_table.c \
 		   core/diagonal.c
 
-simulator: $(CORE_SRC) simulator.c out
-	$(CC) $(CORE_SRC) simulator.c -o $(OUT)/simulator $(LDFLAGS)
-PHONY += simulator
+# simulation for core algorithm
+SIMUL_SRC = simulation/simulator.c $(CORE_SRC)
+simul: $(SIMUL_SRC)
+	$(CC) $(SIMUL_SRC) -o simul $(LDFLAGS)
+PHONY += simul
 
-SRC = sample.c
-sample: $(SRC) out
-	$(CC) $(SRC) -o $(OUT)/sample $(LDFLAGS)
+# graphical full simulator
+SRC = simulation/sample.c
+sample: $(SRC)
+	$(CC) $(SRC) -o sample $(LDFLAGS)
 
+core/load_table.c: gentable
+	./gentable
+
+# turn weight generation tool
+GENTABLE_SRC = utils/gentable.c
 gentable:
-	$(CC) gentable.c -o $(OUT)/gentable $(LDFLAGS)
+	$(CC) $(GENTABLE_SRC) -o gentable $(LDFLAGS)
 PHONY += gentable
 
-out:
-	mkdir -p $(OUT)
-
 clean:
-	rm -rf ./out
-	rm cscope*
+	rm -f simul sample gentable
+	rm -f cscope*
 
 .PHONY: $(PHONY)
 

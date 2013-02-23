@@ -254,9 +254,10 @@ static int gen_bin_tree_tail(char *maze, char *map,
 struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 		unsigned char abs_dir)
 {
-	struct btree_node *bt_node;
-	struct s_link *sl_node, *tail_list = NULL;
+	struct s_link *tail_list = NULL;
 #ifdef DEBUG
+	struct btree_node *bt_node;
+	struct s_link *sl_node;
 	int idx;
 	unsigned char path[256];
 #endif
@@ -431,10 +432,9 @@ void find_fastest_path(struct s_link *pathes,
 					(unsigned char)diag_path[i];
 			f_path[i] = 0xff;
 		}
-
-		printf("Total_time: %dmS\n", total_time);
 	}
 
+	printf("Total_time: %dmS\n", fast_time);
 	if (fast_time == 0xffffffff)
 		print_exit("%s: Couldn't find the fastest path!\n",
 				__func__);

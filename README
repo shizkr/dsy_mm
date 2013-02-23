@@ -1,9 +1,9 @@
 * Next work
-- file out for pattern load weight table generation tool
+- start working on graphical simulator
 
 * Done - 2/22/2013
+- file out for pattern load weight table generation tool
 - add diagonal pattern load weight table generation tool
-
 - add pattern F15 and D27 to calcualte it.
 - add diagonal pattern array from the fastest path
 - end point of bt diag node tree should have pattern number for mouse action

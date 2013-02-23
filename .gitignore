@@ -20,3 +20,7 @@ ncscope.*
 bin
 out
 *.log
+
+gentable
+sample
+simul
