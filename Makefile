@@ -1,10 +1,12 @@
 PKG_CONFIG=`pkg-config --cflags --libs gtk+-2.0`
 CC=/usr/bin/gcc -g -Wall
-CINCLUDE = -Icore
+CINCLUDE = -Icore -Isimulation
 CFLAGS =
 LDFLAGS=$(PKG_CONFIG) $(CFLAGS) $(CINCLUDE)
 
-all: simul sample gentable
+all: simul gentable
+
+core: core_simul gentable
 
 CORE_SRC = core/bin_tree.c \
 		   core/circular_buffer.c \
@@ -12,17 +14,23 @@ CORE_SRC = core/bin_tree.c \
 		   core/load_table.c \
 		   core/diagonal.c
 
+GUI_SRC = simulation/maze.c \
+		  simulation/drawmaze.c \
+		  simulation/drawmouse.c
+
 # simulation for core algorithm
-SIMUL_SRC = simulation/simulator.c $(CORE_SRC)
-simul: $(SIMUL_SRC)
-	$(CC) $(SIMUL_SRC) -o simul $(LDFLAGS)
+CORE_SIMUL_SRC = simulation/simulator.c $(CORE_SRC)
+core_simul: $(CORE_SIMUL_SRC)
+	$(CC) $(CORE_SIMUL_SRC) -o simul $(LDFLAGS)
 	@rm gentable
-PHONY += simul
+PHONY += core_simul
 
 # graphical full simulator
-SRC = simulation/sample.c
-sample: $(SRC)
-	$(CC) $(SRC) -o sample $(LDFLAGS)
+SIMUL_SRC = simulation/simulator.c $(CORE_SRC) $(GUI_SRC)
+simul: $(SIMUL_SRC)
+	$(CC) $(SIMUL_SRC) -o simul $(LDFLAGS) -DMAZE_GUI
+	@rm gentable
+PHONY += simul
 
 core/load_table.c: gentable
 	./gentable
@@ -34,7 +42,7 @@ gentable:
 PHONY += gentable
 
 clean:
-	@rm -f simul sample gentable
+	@rm -f simul gentable
 	@rm -f cscope*
 
 .PHONY: $(PHONY)

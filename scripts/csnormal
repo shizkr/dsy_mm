@@ -32,6 +32,8 @@ fi
 ###############################################################################
 find  $PROJECT                                               \
     -name "*.[hHcCsS]" -print | tee -a "$CSCOPEFILE"
+find  /usr/include/gtk-2.0/gdk/                                               \
+    -name "*.[hHcCsS]" -print | tee -a "$CSCOPEFILE"
 
 ls -al $CSCOPEFILE
 

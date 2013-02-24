@@ -8,6 +8,13 @@
 #include "algo.h"
 #include "diagonal.h"
 
+#ifdef MAZE_GUI
+#include <gtk/gtk.h>
+#include "maze.h"
+#include "drawmaze.h"
+#include "drawmouse.h"
+#endif
+
 #define TAG "simul: "
 #include "debug.h"
 
@@ -67,6 +74,12 @@ int main(int argc, char *argv[])
 	initialize_maze(maze_search);
 	print_map(maze_search);
 
+#ifdef MAZE_GUI
+	gui_init(argc, argv);
+	init_draw_maze(maze_file);
+	draw_mouse(0, 0, 0);
+#endif
+
 #if 0
 	draw_contour(maze_search, contour_map, TO_GOAL_16X16, cur_mouse_pos);
 	mouse_path = gen_bin_tree(maze_search,
@@ -85,5 +98,8 @@ int main(int argc, char *argv[])
 		printf("%02X", diag_path[i]);
 	printf("\n");
 
+#ifdef MAZE_GUI
+	gtk_main();
+#endif
 	exit(EXIT_SUCCESS);
 }

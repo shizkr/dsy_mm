@@ -3,6 +3,8 @@
 
 #include "algo.h"
 
+#define PI       ((double)3.14159265) /* pi  */
+
 enum speed_load_enum {
 	SL_FF,      /* FF */
 	SL_FLR,     /* -45'  in  */

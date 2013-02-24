@@ -32,7 +32,6 @@
 #define BLOCK    ((double)180.0)      /* mm  */
 #define DIAG_BLK ((double)127.2792)   /* mm  */
 #define TPERIOD  ((double)0.00001)    /* sec */
-#define PI       ((double)3.14159265) /* pi  */
 #define TAN22_5  ((double)0.41421356) /* tan(22.5) */
 
 #define GEN_FILENAME "core/load_table.c"
