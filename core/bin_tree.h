@@ -1,6 +1,8 @@
 #ifndef BIN_TREE_H
 #define BIN_TREE_H
 
+#define MAX_BT_NODE_SIZE   512
+
 /*
  * bt_node description
  * dir: direction of left and right child tree	(0~3)
@@ -29,6 +31,7 @@ struct s_link {
 
 struct btree_node *bt_node_alloc(unsigned char pos, unsigned char abs_dir);
 void add_bt_node(struct btree_node *node, struct btree_node *new_node);
+void free_bt_node_list(struct btree_node *head);
 struct s_link *s_link_alloc(struct btree_node *bt_node);
 void add_sl_node(struct s_link **list, struct s_link *node);
 void sl_node_free(struct s_link *head);

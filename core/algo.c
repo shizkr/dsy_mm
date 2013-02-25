@@ -16,8 +16,7 @@
  */
 #ifdef DEBUG
 static int debug_flag;
-
-/* DEBUG_BINTREE | DEBUG_S_LINK; */
+/* = DEBUG_SEARCH | DEBUG_BINTREE | DEBUG_S_LINK; */
 #endif
 
 /* Memorize maze information */
@@ -74,6 +73,21 @@ void print_map(char *map)
 void print_map(char *map) { }
 #endif
 
+/* Draw maze information or contour map.
+ * Map must be MAZEMAX bytes.
+ */
+void print_full(char *map)
+{
+	int x, y;
+
+	for (y = MAX_Y - 1; y >= 0; y--) {
+		for (x = 0; x < MAX_X; x++)
+			printf("%02X", (unsigned char)map[get_index(x, y)]);
+		printf("\n");
+	}
+	printf("\n");
+}
+
 /* function name: draw_contour
  * Input Parameter
  *   maze : maze array wich has maze information
@@ -84,15 +98,18 @@ void print_map(char *map) { }
 void draw_contour(char *maze, char *map,
 		enum SEARCH_TYPE type, unsigned char pos)
 {
-	#define BUFFER_SIZE 64
 	int i, contour_lvl = 1;
-	int index, item;
+	int index;
+	unsigned int item;
 	char found_mouse = 0;
-	int buffer[BUFFER_SIZE];
+	unsigned int *buffer;
 	struct circular_buffer *cb, contour_buffer;
 
+	buffer = malloc(sizeof(unsigned int) * 128);
+	if (buffer == NULL)
+		print_exit("%s:malloc failure\n", __func__);
 	cb = &contour_buffer;
-	circular_buffer_init(cb, buffer, BUFFER_SIZE);
+	circular_buffer_init(cb, buffer, 128);
 
 	/* Uninitialized contour map */
 	memset(map, 0, MAZEMAX);
@@ -162,6 +179,8 @@ void draw_contour(char *maze, char *map,
 		print_exit("%s couldn't find mouse location\n",
 				__func__);
 	}
+
+	free(buffer);
 }
 
 static int gen_bin_tree_tail(char *maze, char *map,
@@ -171,12 +190,16 @@ static int gen_bin_tree_tail(char *maze, char *map,
 	struct s_link *sl_node;
 	struct s_link *sl_new_node, *tail_new_list = NULL;
 	unsigned char i, index, abs_dir;
-	char is_goal = 0;
+	struct btree_node bt_node_backup;
+	char dir, is_goal = 0, found_node;
 
-	if (!maze || !map || !head)
-		print_exit("NULL pointer error!");
+	if (!maze || !map || !head || !*head)
+		print_exit("NULL pointer error! %X %X %X %X\n",
+				(unsigned int)maze, (unsigned int)map,
+				(unsigned int)head, (unsigned int)*head);
 
-	print_dbg(DEBUG_S_LINK, "Check input linked list\n");
+	print_dbg(DEBUG_S_LINK, "Check input linked list: %08X\n",
+			(unsigned int)*head);
 	debug_sl_node(*head);
 
 	print_dbg(DEBUG_S_LINK, "Find next lower contour level\n");
@@ -185,9 +208,34 @@ static int gen_bin_tree_tail(char *maze, char *map,
 		index = sl_node->bt_node->pos;
 		abs_dir = sl_node->bt_node->abs_dir;
 		bt_node = sl_node->bt_node;
+
+		/* when it's set, found turn. on the unkonwn blocks,
+		 * there may be too many pathes to calculate.
+		 **/
+		found_node = 0;
+		bt_node_backup.time = 0; /* use to check FD detection */
+
 		for (i = NI; i <= WI; i++) {
 			if (!(maze[index] & wall_bit(i)) &&
 				(map[index] == map[index + maze_dxy[i]] + 1)) {
+
+				dir = relative_direction(abs_dir, i);
+
+				/* if block is unknown, then take turn prior
+				 * to straight path. It's to save memory
+				 * and calculation time.
+				 */
+				if (dir == FD && ((maze[index]&0xF0) != 0xF0)) {
+					bt_node_backup.pos = index+maze_dxy[i];
+					bt_node_backup.dir = dir;
+					bt_node_backup.abs_dir = i;
+					/* to mark block has meaningful data */
+					bt_node_backup.time = 1;
+					continue;
+				}
+
+				found_node = 1;
+
 				/* create new bt_node and save next mouse index
 				 * and absolute direction of mouse at next block
 				 */
@@ -197,8 +245,7 @@ static int gen_bin_tree_tail(char *maze, char *map,
 				/* Next bt_node->dir is to save how mouse made
 				 * a turn to come the block.
 				 */
-				bt_new_node->dir =
-					relative_direction(abs_dir, i);
+				bt_new_node->dir = dir;
 
 				add_bt_node(bt_node, bt_new_node);
 
@@ -209,10 +256,25 @@ static int gen_bin_tree_tail(char *maze, char *map,
 				 * debug_sl_node(tail_new_list);
 				 */
 			}
-
-			if (map[index] == 1 && !is_goal)
-				is_goal = 1;
 		}
+
+		/* if forward is the only one in known block,
+		 * then use it
+		 */
+		if (!found_node && bt_node_backup.time) {
+			bt_new_node =
+				bt_node_alloc(bt_node_backup.pos,
+						bt_node_backup.abs_dir);
+			bt_new_node->dir = bt_node_backup.dir;
+
+			add_bt_node(bt_node, bt_new_node);
+
+			sl_new_node = s_link_alloc(bt_new_node);
+			add_sl_node(&tail_new_list, sl_new_node);
+		}
+
+		if (map[index] == 1 && !is_goal)
+			is_goal = 1;
 	}
 	if (tail_new_list)
 		debug_sl_node(tail_new_list);
@@ -239,6 +301,21 @@ static int gen_bin_tree_tail(char *maze, char *map,
 	}
 #endif
 
+	/* critical error to find next contour maps */
+	if (!is_goal && tail_new_list == NULL) {
+		printf("contour map\n");
+		print_full(map);
+		printf("maze map\n");
+		print_map(maze);
+		for (sl_node = *head; sl_node; sl_node = sl_node->node) {
+			index = sl_node->bt_node->pos;
+			abs_dir = sl_node->bt_node->abs_dir;
+			bt_node = sl_node->bt_node;
+			printf("mouse:(%d,%d),abs_dir:%d\n", pos_x(index),
+					pos_y(index), abs_dir);
+		}
+	}
+
 	/* free s_link nodes */
 	if (!is_goal) {
 		sl_node_free(*head);
@@ -246,6 +323,15 @@ static int gen_bin_tree_tail(char *maze, char *map,
 	}
 
 	return is_goal;
+}
+
+void free_top_node_contour_tree(void)
+{
+	if (!contour_tree)
+		print_exit("%s:Do not call this before generating tree.\n",
+				__func__);
+	free_bt_node_list(contour_tree);
+	contour_tree = NULL;
 }
 
 /* maze: maze array pointer
@@ -264,6 +350,9 @@ struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 #endif
 
 	/* Init first node from current mouse location */
+	if (contour_tree != NULL)
+		print_exit("%s:Please free the binary tree before creating!\n",
+				__func__);
 	contour_tree = bt_node_alloc(pos_st, abs_dir);
 	tail_list = s_link_alloc(contour_tree);
 
@@ -522,6 +611,9 @@ struct s_link *find_fastest_path(struct s_link *pathes)
 
 	for (sl_node = pathes; sl_node; sl_node = sl_node->node) {
 		path = gen_frbl_from_node(sl_node);
+		/* back turn is assumed as FD to find the path */
+		if (*path == BD)
+			*path = FD;
 		total_time = calculate_path_time(path);
 		sl_node->bt_node->time = total_time;
 
@@ -547,7 +639,7 @@ void save_wallinfo_to_maze(unsigned char index, unsigned char wall)
 {
 	int x, y;
 
-	printf("%02X, %02X\n", index, wall&0xf);
+	print_dbg(DEBUG_SEARCH, "%02X, %02X\n", index, wall&0xf);
 	/* trying to save know wall to maze_search? */
 	if ((maze_search[index]&0xF0) == 0xF0)
 		print_exit("%s: %d,%d is already known block!\n",
@@ -571,7 +663,7 @@ void save_wallinfo_to_maze(unsigned char index, unsigned char wall)
 	if (x+1 < MAX_X) {
 		maze_search[get_index(x+1, y)] |= KNOWN_WEST;
 		if (wall & EAST)
-			maze_search[get_index(x, y+1)] |= WEST;
+			maze_search[get_index(x+1, y)] |= WEST;
 	}
 	/* south (it's north wall of next block) */
 	if (y > 0) {
@@ -582,10 +674,11 @@ void save_wallinfo_to_maze(unsigned char index, unsigned char wall)
 	/* west (it's east wall of next block) */
 	if (x > 0) {
 		maze_search[get_index(x-1, y)] |= KNOWN_EAST;
-		if (wall & NORTH)
+		if (wall & WEST)
 			maze_search[get_index(x-1, y)] |= EAST;
 	}
-	printf("%02X, %02X\n", index, (unsigned char)maze_search[index]);
+	print_dbg(DEBUG_SEARCH, "%s: index:%02X maze_search[index]=%02X\n",
+			__func__, index, (unsigned char)maze_search[index]);
 }
 
 int is_goal(unsigned char index)

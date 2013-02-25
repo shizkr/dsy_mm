@@ -83,16 +83,11 @@ int main(int argc, char *argv[])
 #endif
 
 	simul_mouse_search_goal(maze_file);
-#if 0
-#if 0
-	draw_contour(maze_search, contour_map, TO_GOAL_16X16, cur_mouse_pos);
-	mouse_path = gen_bin_tree(maze_search,
-			contour_map, cur_mouse_pos, cur_mouse_dir);
-#else
+
+#ifdef CAL_PATHES
 	draw_contour(maze_file, contour_map, TO_GOAL_16X16, cur_mouse_pos);
 	mouse_path = gen_bin_tree(maze_file,
 			contour_map, cur_mouse_pos, cur_mouse_dir);
-#endif
 
 	f_node = find_fastest_path(mouse_path);
 
@@ -102,6 +97,7 @@ int main(int argc, char *argv[])
 		printf("%02X", diag_path[i]);
 	printf("\n");
 #endif
+
 #ifdef MAZE_GUI
 	gtk_main();
 #endif

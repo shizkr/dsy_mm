@@ -5,7 +5,7 @@
 #include <string.h>
 #include "circular_buffer.h"
 
-void circular_buffer_init(struct circular_buffer *cb, int *items, int size)
+void circular_buffer_init(struct circular_buffer *cb, unsigned int *items, int size)
 {
 	cb->size = size;
 	cb->start = 0;
@@ -18,13 +18,13 @@ int circular_buffer_full(struct circular_buffer *cb)
 	return ((cb->end + 1) % cb->size == cb->start);
 }
 
-inline void circular_buffer_read(struct circular_buffer *cb, int *item)
+inline void circular_buffer_read(struct circular_buffer *cb, unsigned int *item)
 {
 	*item = cb->items[cb->start];
 	cb->start = (cb->start + 1) % cb->size;
 }
 
-inline void circular_buffer_write(struct circular_buffer *cb, int item)
+inline void circular_buffer_write(struct circular_buffer *cb, unsigned  int item)
 {
 	cb->items[cb->end] = item;
 	cb->end = (cb->end + 1) % cb->size;

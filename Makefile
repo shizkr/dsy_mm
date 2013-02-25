@@ -5,29 +5,33 @@ CFLAGS = -DDEBUG
 LDFLAGS=$(PKG_CONFIG) $(CFLAGS) $(CINCLUDE)
 
 all: simul gentable
-
 core: core_simul gentable
 
+# core common files for simulator and real mouse
 CORE_SRC = core/bin_tree.c \
 		   core/circular_buffer.c \
 		   core/algo.c \
 		   core/load_table.c \
 		   core/diagonal.c
 
+# it's for GUI simulation program only
 GUI_SRC = simulation/maze.c \
 		  simulation/drawmaze.c \
-		  simulation/drawmouse.c \
-		  simulation/run_mouse.c
+		  simulation/drawmouse.c
+
+# it's for non-GUI simulation program only
+CORE_SIMUL = simulation/run_mouse.c \
+			 simulation/simulator.c
 
 # simulation for core algorithm
-CORE_SIMUL_SRC = simulation/simulator.c $(CORE_SRC)
+CORE_SIMUL_SRC = $(CORE_SIMUL) $(CORE_SRC)
 core_simul: $(CORE_SIMUL_SRC)
-	$(CC) $(CORE_SIMUL_SRC) -o simul $(LDFLAGS)
+	$(CC) $(CORE_SIMUL_SRC) -o simul $(LDFLAGS) -DDEBUG
 	@rm gentable
 PHONY += core_simul
 
 # graphical full simulator
-SIMUL_SRC = simulation/simulator.c $(CORE_SRC) $(GUI_SRC)
+SIMUL_SRC = $(CORE_SIMUL) $(CORE_SRC) $(GUI_SRC)
 simul: $(SIMUL_SRC)
 	$(CC) $(SIMUL_SRC) -o simul $(LDFLAGS) -DMAZE_GUI
 	@rm gentable

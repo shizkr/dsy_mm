@@ -30,10 +30,14 @@ fi
 ###############################################################################
 # source files
 ###############################################################################
-find  $PROJECT                                               \
+find  $PROJECT                                           \
     -name "*.[hHcCsS]" -print | tee -a "$CSCOPEFILE"
-find  /usr/include/gtk-2.0/gdk/                                               \
+find  /usr/include/gtk-2.0/gdk/                          \
     -name "*.[hHcCsS]" -print | tee -a "$CSCOPEFILE"
+find  $PROJECT/scripts                                   \
+    -name "*" -print | tee -a "$CSCOPEFILE"
+find  $PROJECT/Makefile                                  \
+    -name "*" -print | tee -a "$CSCOPEFILE"
 
 ls -al $CSCOPEFILE
 

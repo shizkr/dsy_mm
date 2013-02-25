@@ -100,5 +100,5 @@ int calculate_path_time(unsigned char *path);
 struct s_link *find_fastest_path(struct s_link *pathes);
 void save_wallinfo_to_maze(unsigned char index, unsigned char wall);
 int is_goal(unsigned char index);
-
+void free_top_node_contour_tree(void);
 #endif

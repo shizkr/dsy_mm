@@ -130,6 +130,8 @@ static int diag_node_cnt;
 static struct diagonal_node *diag_node_alloc(void)
 {
 	struct diagonal_node *node = malloc(sizeof(struct diagonal_node));
+	if (node == NULL)
+		print_exit("%s: malloc failure!\n", __func__);
 	memset(node, 0, sizeof(struct diagonal_node));
 
 #ifdef DEBUG
@@ -307,6 +309,8 @@ void diagonal_pattern_tree_init(unsigned int *load_time)
 	/* Add forward path as maximum 15 */
 	memset(pattern, FD, sizeof(pattern));
 	diag_item = malloc(sizeof(struct diagonal_type));
+	if (diag_item == NULL)
+		print_exit("%s: malloc failure!\n", __func__);
 	diag_item->pttn = pattern;
 	for (idx = SL_F3, i = 3; idx <= SL_F15;
 			idx++, i++) {
