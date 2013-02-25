@@ -8,6 +8,7 @@
 #include "algo.h"
 #include "diagonal.h"
 #include "run_mouse.h"
+#include "timer.h"
 
 #ifdef MAZE_GUI
 #include <gtk/gtk.h>
@@ -53,10 +54,12 @@ int load_maze(char *filename, char *maze)
 
 int main(int argc, char *argv[])
 {
+#ifdef CAL_PATHES
 	unsigned char cur_mouse_pos = 0x00;
 	unsigned char cur_mouse_dir = NI;
 	struct s_link *mouse_path, *f_node;
 	int diag_path[128], i;
+#endif
 
 	print_dbg(DEBUG_PRINT, "Start main\n");
 
@@ -82,7 +85,7 @@ int main(int argc, char *argv[])
 	draw_mouse(0, 0, 0);
 #endif
 
-	simul_mouse_search_goal(maze_file);
+	run_timer(maze_file);
 
 #ifdef CAL_PATHES
 	draw_contour(maze_file, contour_map, TO_GOAL_16X16, cur_mouse_pos);
@@ -101,5 +104,7 @@ int main(int argc, char *argv[])
 #ifdef MAZE_GUI
 	gtk_main();
 #endif
+	while (1)
+		;
 	exit(EXIT_SUCCESS);
 }

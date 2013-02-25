@@ -21,7 +21,8 @@ GUI_SRC = simulation/maze.c \
 
 # it's for non-GUI simulation program only
 CORE_SIMUL = simulation/run_mouse.c \
-			 simulation/simulator.c
+			 simulation/simulator.c \
+			 simulation/timer.c
 
 # simulation for core algorithm
 CORE_SIMUL_SRC = $(CORE_SIMUL) $(CORE_SRC)

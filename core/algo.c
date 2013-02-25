@@ -530,8 +530,7 @@ int calculate_path_time(unsigned char *path)
 {
 	int idx = 0, size;
 	unsigned int time, total_time = 0;
-	int i, diag_idx = 0;
-	enum speed_load_enum diag_path[128];
+	int i;
 	struct diag_pttn_time_type *pttn;
 
 	/*
@@ -589,11 +588,6 @@ int calculate_path_time(unsigned char *path)
 			} else {
 				total_time += time;
 
-				diag_path[diag_idx++] = pttn->pttn;
-				if (diag_idx >= 128)
-					print_exit(
-					"%s:Increase diag path " \
-					"array size!\n", __func__);
 				idx += (size - 1);
 				size = 2;
 				break;

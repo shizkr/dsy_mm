@@ -10,6 +10,7 @@
 
 #ifdef MAZE_GUI
 #include "drawmouse.h"
+#include "timer.h"
 #endif
 
 #define TAG "runmouse: "
@@ -19,8 +20,7 @@
  * Varialbles
  */
 #ifdef DEBUG
-static int debug_flag;
-/* = DEBUG_SEARCH; */
+static int debug_flag = DEBUG_SEARCH;
 #endif
 
 /* Read maze block according to current mouse position and
@@ -74,91 +74,80 @@ unsigned char *find_maze_fastest_path(char *maze_file,
 	return path;
 }
 
-void simul_mouse_search_goal(char *maze_file)
+static unsigned char cur_mouse_pos;
+static char cur_mouse_dir = NI;
+
+static void simul_mouse_search_goal(char *maze_file, char target)
 {
-	unsigned char cur_mouse_pos = 0x00;
-	char cur_mouse_dir = NI;
 	struct s_link *f_node;
 	unsigned char *path_array;
+	enum SEARCH_TYPE search_type;
 
 	print_dbg(DEBUG_SEARCH, "%s\n", __func__);
-	while (!is_goal(cur_mouse_pos)) {
-		/* find next block */
-		path_array = find_maze_fastest_path(maze_file,
-			cur_mouse_pos, cur_mouse_dir, TO_GOAL_16X16, &f_node);
 
-		cur_mouse_dir = absolute_direction(cur_mouse_dir, *path_array);
+	if (target == 0)
+		search_type = TO_GOAL_16X16;
+	else if (target == 1)
+		search_type = TO_START_16X16;
+	else
+		return;
 
-		print_dbg(DEBUG_SEARCH, "Move mouse\n");
-		if (cur_mouse_dir == NI)
-			inc_y_index(cur_mouse_pos);
-		else if (cur_mouse_dir == EI)
-			inc_x_index(cur_mouse_pos);
-		else if (cur_mouse_dir == SI)
-			dec_y_index(cur_mouse_pos);
-		else if (cur_mouse_dir == WI)
-			dec_x_index(cur_mouse_pos);
-		else
-			print_exit("%s:Unknown direction %d!\n",
-					__func__, cur_mouse_dir);
+	/* find next block */
+	path_array = find_maze_fastest_path(maze_file,
+		cur_mouse_pos, cur_mouse_dir, search_type, &f_node);
 
-		if ((maze_search[cur_mouse_pos]&0xF0) != 0xF0)
-			save_wallinfo_to_maze(cur_mouse_pos,
-				read_maze_block(maze_file, cur_mouse_pos));
+	cur_mouse_dir = absolute_direction(cur_mouse_dir, *path_array);
 
-		print_dbg(DEBUG_SEARCH, "new position X:%d,Y:%d\n",
-				pos_x(cur_mouse_pos), pos_y(cur_mouse_pos));
-		print_map(maze_search);
+	print_dbg(DEBUG_SEARCH, "Move mouse\n");
+	if (cur_mouse_dir == NI)
+		inc_y_index(cur_mouse_pos);
+	else if (cur_mouse_dir == EI)
+		inc_x_index(cur_mouse_pos);
+	else if (cur_mouse_dir == SI)
+		dec_y_index(cur_mouse_pos);
+	else if (cur_mouse_dir == WI)
+		dec_x_index(cur_mouse_pos);
+	else
+		print_exit("%s:Unknown direction %d!\n",
+				__func__, cur_mouse_dir);
 
-		/* this must be called before starting new mapping */
-		free_top_node_contour_tree();
+	if ((maze_search[cur_mouse_pos]&0xF0) != 0xF0)
+		save_wallinfo_to_maze(cur_mouse_pos,
+			read_maze_block(maze_file, cur_mouse_pos));
+
+	print_dbg(DEBUG_SEARCH, "new position X:%d,Y:%d\n",
+			pos_x(cur_mouse_pos), pos_y(cur_mouse_pos));
+	print_map(maze_search);
+
+	/* this must be called before starting new mapping */
+	free_top_node_contour_tree();
 #ifdef MAZE_GUI
-		draw_mouse(pos_x(cur_mouse_pos)*48,
-				pos_y(cur_mouse_pos)*48, 0);
+	draw_mouse(pos_x(cur_mouse_pos)*48,
+			pos_y(cur_mouse_pos)*48, 0);
+
+	timer_rearm(100);
 #endif
+}
+
+int simul_mouse_search_run(char *maze_file)
+{
+	static char current_target;
+
+	/* start looking for goal with search run */
+	if (current_target == 0) {
+		simul_mouse_search_goal(maze_file, current_target);
+		if (is_goal(cur_mouse_pos)) {
+			current_target = 1;
+			return 1;
+		}
+	} else if (current_target == 1) {
+		/* return to start with search run */
+		simul_mouse_search_goal(maze_file, current_target);
+		if (cur_mouse_dir == 0) {
+			current_target = 2;
+			return 2;
+		}
 	}
 
-	printf("Found goal X:%02X, Y:%02X\n",
-			pos_x(cur_mouse_pos), pos_y(cur_mouse_pos));
-
-	while (cur_mouse_pos > 0) {
-		/* find next block */
-		path_array = find_maze_fastest_path(maze_file,
-			cur_mouse_pos, cur_mouse_dir, TO_START_16X16, &f_node);
-
-		cur_mouse_dir = absolute_direction(cur_mouse_dir, *path_array);
-
-		print_dbg(DEBUG_SEARCH, "Move mouse\n");
-		if (cur_mouse_dir == NI)
-			inc_y_index(cur_mouse_pos);
-		else if (cur_mouse_dir == EI)
-			inc_x_index(cur_mouse_pos);
-		else if (cur_mouse_dir == SI)
-			dec_y_index(cur_mouse_pos);
-		else if (cur_mouse_dir == WI)
-			dec_x_index(cur_mouse_pos);
-		else
-			print_exit("%s:Unknown direction %d!\n",
-					__func__, cur_mouse_dir);
-
-		if ((maze_search[cur_mouse_pos]&0xF0) != 0xF0)
-			save_wallinfo_to_maze(cur_mouse_pos,
-				read_maze_block(maze_file, cur_mouse_pos));
-
-		print_dbg(DEBUG_SEARCH, "new position X:%d,Y:%d\n",
-				pos_x(cur_mouse_pos), pos_y(cur_mouse_pos));
-		/*
-		print_map(maze_search);
-		*/
-
-		/* this must be called before starting new mapping */
-		free_top_node_contour_tree();
-#ifdef MAZE_GUI
-		draw_mouse(pos_x(cur_mouse_pos)*48,
-				pos_y(cur_mouse_pos)*48, 0);
-#endif
-	}
-
-	printf("Found goal X:%02X, Y:%02X\n",
-			pos_x(cur_mouse_pos), pos_y(cur_mouse_pos));
+	return 0;
 }
