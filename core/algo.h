@@ -18,6 +18,11 @@
 #define SOUTH	4
 #define WEST	8
 
+#define KNOWN_NORTH	0x10
+#define KNOWN_EAST	0x20
+#define KNOWN_SOUTH	0x40
+#define KNOWN_WEST	0x80
+
 #define FD	0
 #define RD	1
 #define BD	2
@@ -33,6 +38,10 @@
 #define pos_x(index)	((index>>4)&0xf)
 #define pos_y(index)	(index&0xf)
 #define get_index(x, y)	(((x)<<4)|(y))
+#define dec_x_index(index) (index-=0x10)
+#define inc_x_index(index) (index+=0x10)
+#define dec_y_index(index) (index-=0x01)
+#define inc_y_index(index) (index+=0x01)
 
 #define gen_contour_pos(value, index) ((value << 8)|(index))
 #define get_contour_lvl(map)	(map >> 8)
@@ -47,7 +56,7 @@
 	(((4+(next))-(curr))&3)
 
 /* r_dir: relative direction of FRBL
- * curr_dir: current mouse direction
+ * curr_dir: current mouse absolute direction
  * result: absolute direction of NESW(0~3)
  */
 #define absolute_direction(curr_dir, rel_dir) \
@@ -89,4 +98,7 @@ int get_diag_path_from_node(struct s_link *node, int *diag_path);
 int get_diag_path_from_turn(unsigned char *path, int *diag_path);
 int calculate_path_time(unsigned char *path);
 struct s_link *find_fastest_path(struct s_link *pathes);
+void save_wallinfo_to_maze(unsigned char index, unsigned char wall);
+int is_goal(unsigned char index);
+
 #endif

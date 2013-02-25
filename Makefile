@@ -1,7 +1,7 @@
 PKG_CONFIG=`pkg-config --cflags --libs gtk+-2.0`
 CC=/usr/bin/gcc -g -Wall
 CINCLUDE = -Icore -Isimulation
-CFLAGS =
+CFLAGS = -DDEBUG
 LDFLAGS=$(PKG_CONFIG) $(CFLAGS) $(CINCLUDE)
 
 all: simul gentable
@@ -16,7 +16,8 @@ CORE_SRC = core/bin_tree.c \
 
 GUI_SRC = simulation/maze.c \
 		  simulation/drawmaze.c \
-		  simulation/drawmouse.c
+		  simulation/drawmouse.c \
+		  simulation/run_mouse.c
 
 # simulation for core algorithm
 CORE_SIMUL_SRC = simulation/simulator.c $(CORE_SRC)

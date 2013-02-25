@@ -41,17 +41,18 @@ void initialize_maze(char *maze)
 	for (x = 0; x < MAX_X; x++) {
 		for (y = 0; y < MAX_Y; y++) {
 			if (x == 0)
-				maze[get_index(x, y)] |= WEST;
+				maze[get_index(x, y)] |= (KNOWN_WEST|WEST);
 			if (y == 0)
-				maze[get_index(x, y)] |= SOUTH;
+				maze[get_index(x, y)] |= (KNOWN_SOUTH|SOUTH);
 			if (x == MAX_X - 1)
-				maze[get_index(x, y)] |= EAST;
+				maze[get_index(x, y)] |= (KNOWN_EAST|EAST);
 			if (y == MAX_Y - 1)
-				maze[get_index(x, y)] |= NORTH;
+				maze[get_index(x, y)] |= (KNOWN_NORTH|NORTH);
 		}
 	}
 
-	maze[get_index(0, 0)] |= EAST;
+	maze[get_index(0, 0)] |= (0xf0|EAST);
+	maze[get_index(1, 0)] |= (KNOWN_WEST|WEST);
 }
 
 #ifdef DEBUG
@@ -64,7 +65,7 @@ void print_map(char *map)
 
 	for (y = MAX_Y - 1; y >= 0; y--) {
 		for (x = 0; x < MAX_X; x++)
-			printf("%02X", map[get_index(x, y)]);
+			printf("%02X", map[get_index(x, y)]&0xf);
 		printf("\n");
 	}
 	printf("\n");
@@ -537,5 +538,61 @@ struct s_link *find_fastest_path(struct s_link *pathes)
 				__func__);
 
 	return fast_sl_node;
+}
+
+/* wall bits are filled by absolute direction.
+ * index : current mouse location to save the wall information.
+ */
+void save_wallinfo_to_maze(unsigned char index, unsigned char wall)
+{
+	int x, y;
+
+	printf("%02X, %02X\n", index, wall&0xf);
+	/* trying to save know wall to maze_search? */
+	if ((maze_search[index]&0xF0) == 0xF0)
+		print_exit("%s: %d,%d is already known block!\n",
+				__func__, pos_x(index), pos_y(index));
+
+	/* save wall info to current index */
+	maze_search[index] |= (wall&0xf);
+	maze_search[index] |= 0xF0;
+
+	/* save wall information the wall of other blocks */
+	x = pos_x(index);
+	y = pos_y(index);
+
+	/* north (it's south wall of next block) */
+	if (y+1 < MAX_Y) {
+		maze_search[get_index(x, y+1)] |= KNOWN_SOUTH;
+		if (wall & NORTH)
+			maze_search[get_index(x, y+1)] |= SOUTH;
+	}
+	/* east (it's west wall of next block) */
+	if (x+1 < MAX_X) {
+		maze_search[get_index(x+1, y)] |= KNOWN_WEST;
+		if (wall & EAST)
+			maze_search[get_index(x, y+1)] |= WEST;
+	}
+	/* south (it's north wall of next block) */
+	if (y > 0) {
+		maze_search[get_index(x, y-1)] |= KNOWN_NORTH;
+		if (wall & SOUTH)
+			maze_search[get_index(x, y-1)] |= NORTH;
+	}
+	/* west (it's east wall of next block) */
+	if (x > 0) {
+		maze_search[get_index(x-1, y)] |= KNOWN_EAST;
+		if (wall & NORTH)
+			maze_search[get_index(x-1, y)] |= EAST;
+	}
+	printf("%02X, %02X\n", index, (unsigned char)maze_search[index]);
+}
+
+int is_goal(unsigned char index)
+{
+	if (index == 0x77 || index == 0x87 ||
+			index == 0x78 || index == 0x88)
+		return 1;
+	return 0;
 }
 

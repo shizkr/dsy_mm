@@ -7,6 +7,7 @@
 #include "bin_tree.h"
 #include "algo.h"
 #include "diagonal.h"
+#include "run_mouse.h"
 
 #ifdef MAZE_GUI
 #include <gtk/gtk.h>
@@ -73,6 +74,7 @@ int main(int argc, char *argv[])
 	print_info("Initialized maze\n");
 	initialize_maze(maze_search);
 	print_map(maze_search);
+	print_map(maze_search);
 
 #ifdef MAZE_GUI
 	gui_init(argc, argv);
@@ -80,6 +82,8 @@ int main(int argc, char *argv[])
 	draw_mouse(0, 0, 0);
 #endif
 
+	simul_mouse_search_goal(maze_file);
+#if 0
 #if 0
 	draw_contour(maze_search, contour_map, TO_GOAL_16X16, cur_mouse_pos);
 	mouse_path = gen_bin_tree(maze_search,
@@ -97,7 +101,7 @@ int main(int argc, char *argv[])
 	for (i = 0; diag_path[i] != 0xff; i++)
 		printf("%02X", diag_path[i]);
 	printf("\n");
-
+#endif
 #ifdef MAZE_GUI
 	gtk_main();
 #endif
