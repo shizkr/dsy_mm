@@ -83,9 +83,13 @@ int main(int argc, char *argv[])
 	gui_init(argc, argv);
 	init_draw_maze(maze_file);
 	draw_mouse(0, 0, 0);
-#endif
 
 	run_timer(maze_file);
+#endif
+
+	/*
+	run_timer(maze_file);
+	*/
 
 #ifdef CAL_PATHES
 	draw_contour(maze_file, contour_map, TO_GOAL_16X16, cur_mouse_pos);
@@ -104,7 +108,5 @@ int main(int argc, char *argv[])
 #ifdef MAZE_GUI
 	gtk_main();
 #endif
-	while (1)
-		;
 	exit(EXIT_SUCCESS);
 }

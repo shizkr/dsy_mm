@@ -32,6 +32,7 @@ void draw_mouse(int x, int y, int angle)
 	static int init;
 	static struct mouse_shape m;
 
+	printf("%s: %d, %d\n", __func__, x, y);
 	if (!init)
 		init = 1;
 	else {
@@ -81,6 +82,10 @@ void draw_mouse(int x, int y, int angle)
 				m.tx, m.ty, m.rx, m.ry);
 	gdk_draw_line(this.pixMap, this.drawingArea->style->black_gc,
 				m.tx, m.ty, m.bx, m.by);
+	/*
 	gtk_widget_queue_draw_area(this.drawingArea,
 			m.asx, m.asy, m.aex, m.aey);
+	*/
+	gtk_widget_queue_draw_area(this.drawingArea,
+			0, 0, 900, 900);
 }

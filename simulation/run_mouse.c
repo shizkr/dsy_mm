@@ -123,9 +123,7 @@ static void simul_mouse_search_goal(char *maze_file, char target)
 	free_top_node_contour_tree();
 #ifdef MAZE_GUI
 	draw_mouse(pos_x(cur_mouse_pos)*48,
-			pos_y(cur_mouse_pos)*48, 0);
-
-	timer_rearm(100);
+			pos_y(cur_mouse_pos)*48, cur_mouse_dir * 90);
 #endif
 }
 
@@ -143,7 +141,7 @@ int simul_mouse_search_run(char *maze_file)
 	} else if (current_target == 1) {
 		/* return to start with search run */
 		simul_mouse_search_goal(maze_file, current_target);
-		if (cur_mouse_dir == 0) {
+		if (cur_mouse_pos == 0) {
 			current_target = 2;
 			return 2;
 		}
