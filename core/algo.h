@@ -3,6 +3,7 @@
 
 #include "diagonal.h"
 
+/* Consider to support 1024(32X32) map */
 #define MAZEMAX 256
 
 /*
@@ -64,12 +65,18 @@
 
 /* MAZE SEARCH TYPE */
 enum SEARCH_TYPE {
-	TO_GOAL_4X4,
+	TO_GOAL_4X4 = 0,
 	TO_START_4X4,
+	TO_GOAL_5X5,
+	TO_START_5X5,
 	TO_GOAL_8X8,
 	TO_START_8X8,
+	TO_GOAL_9X9,
+	TO_START_9X9,
 	TO_GOAL_16X16,
-	TO_START_16X16
+	TO_START_16X16,
+	TO_GOAL_32X32,
+	TO_START_32X32,
 };
 
 extern char maze_search[MAZEMAX];

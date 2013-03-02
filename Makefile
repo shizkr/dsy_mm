@@ -4,7 +4,7 @@ CINCLUDE = -Icore -Isimulation
 CFLAGS = -DDEBUG
 LDFLAGS=$(PKG_CONFIG) $(CFLAGS) $(CINCLUDE)
 
-all: simul gentable
+all: runsimul gentable
 core: core_simul gentable
 
 # core common files for simulator and real mouse
@@ -33,10 +33,10 @@ PHONY += core_simul
 
 # graphical full simulator
 SIMUL_SRC = $(CORE_SIMUL) $(CORE_SRC) $(GUI_SRC)
-simul: $(SIMUL_SRC)
-	$(CC) $(SIMUL_SRC) -o simul $(LDFLAGS) -DMAZE_GUI
+runsimul: $(SIMUL_SRC)
+	$(CC) $(SIMUL_SRC) -o runsimul $(LDFLAGS) -DMAZE_GUI
 	@rm gentable
-PHONY += simul
+PHONY += runsimul
 
 core/load_table.c: gentable
 	./gentable
@@ -48,7 +48,7 @@ gentable:
 PHONY += gentable
 
 clean:
-	@rm -f simul gentable
+	@rm -f runsimul gentable
 	@rm -f cscope*
 
 .PHONY: $(PHONY)

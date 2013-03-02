@@ -22,9 +22,9 @@
  * USER needs to modify this parameters.
  *
  ***************************************************/
-#define VIN     ((double)2300.0)  /* mm/s */
+#define VIN     ((double)1500.0)  /* mm/s */
 #define VMAX    ((double)4000.0)  /* mm/s */
-#define ACCEL   ((double)9000.0)  /* mm/s^2 */
+#define ACCEL   ((double)15000.0)  /* mm/s^2 */
 
 #define D45_STRAIGHT_IN  ((double)45.0) /* mm */
 

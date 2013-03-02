@@ -18,7 +18,7 @@ static gboolean timer_handler(gpointer data)
 	static int count;
 
 	printf("=>timer expired %d times\n", ++count);
-	if (simul_mouse_search_run(maze_file) == 2)
+	if (simul_mouse_search_run(maze_file) == 5)
 		return 0;
 
 	return 1;
@@ -32,7 +32,7 @@ void run_timer(char *maze_file)
 	if (maze_file == NULL)
 		print_exit("%s: maze_file is NULL.\n", __func__);
 
-	g_timeout_add(200, timer_handler, maze_file);
+	g_timeout_add(TIMER_MS, timer_handler, maze_file);
 
 #ifdef DEBUG
 	t1 = clock();

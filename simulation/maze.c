@@ -129,6 +129,11 @@ static gboolean button_press_event(GtkWidget *widget, GdkEventButton *event)
 
 static void createDrawingArea() {
     this.drawingArea = gtk_drawing_area_new();
+	GdkGC *gc = this.drawingArea->style->
+		fg_gc[GTK_WIDGET_STATE(this.drawingArea)];
+	GdkVisual *visual = gtk_widget_get_visual(this.drawingArea);
+	GdkColormap *colour_map = gdk_colormap_new(visual, TRUE);
+	GdkColor background_colour, light_edge, dark_edge, text_colour;
 
     gtk_signal_connect (GTK_OBJECT (this.drawingArea), "expose_event",
                   (GtkSignalFunc) expose_event, NULL);
@@ -144,8 +149,40 @@ static void createDrawingArea() {
                  | GDK_POINTER_MOTION_HINT_MASK);
 
     gtk_drawing_area_size(GTK_DRAWING_AREA(this.drawingArea), WIN_MAX_X, WIN_MAX_Y);
+
+	/* color setting */
+	gdk_color_parse("#F5DEB3", &background_colour);
+	gdk_colormap_alloc_color(colour_map, &background_colour, TRUE, TRUE);
+	gdk_color_parse("#FF0000", &light_edge);
+	gdk_colormap_alloc_color(colour_map, &light_edge, TRUE, TRUE);
+	gdk_color_parse("#606060", &dark_edge);
+	gdk_colormap_alloc_color(colour_map, &dark_edge, TRUE, TRUE);
+	gdk_color_parse("#000000", &text_colour);
+	gdk_colormap_alloc_color(colour_map, &text_colour, TRUE, TRUE);
+
+	gdk_gc_set_foreground(gc, &background_colour);
+	gdk_gc_set_fill(gc, GDK_SOLID);
+	gdk_gc_set_foreground(gc, &light_edge);
 }
 
+/* set foreground color */
+GdkGC *gui_set_color(char *color)
+{
+	GdkGC *gc = this.drawingArea->style->
+		fg_gc[GTK_WIDGET_STATE(this.drawingArea)];
+	GdkVisual *visual = gtk_widget_get_visual(this.drawingArea);
+	GdkColormap *colour_map = gdk_colormap_new(visual, TRUE);
+	GdkColor light_edge;
+
+	/* color setting */
+	gdk_color_parse(color, &light_edge);
+	gdk_colormap_alloc_color(colour_map, &light_edge, TRUE, TRUE);
+
+	gdk_gc_set_fill(gc, GDK_SOLID);
+	gdk_gc_set_foreground(gc, &light_edge);
+
+	return gc;
+}
 
 void gui_init(int argc, char *argv[])
 {

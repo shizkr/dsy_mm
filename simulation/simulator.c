@@ -87,10 +87,6 @@ int main(int argc, char *argv[])
 	run_timer(maze_file);
 #endif
 
-	/*
-	run_timer(maze_file);
-	*/
-
 #ifdef CAL_PATHES
 	draw_contour(maze_file, contour_map, TO_GOAL_16X16, cur_mouse_pos);
 	mouse_path = gen_bin_tree(maze_file,

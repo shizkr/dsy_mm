@@ -13,5 +13,19 @@
 #define WIN_MAX_X   820
 #define WIN_MAX_Y   820
 
+struct dot {
+	int x;
+	int y;
+};
+
+struct line {
+	int start_x;
+	int start_y;
+	int end_x;
+	int end_y;
+};
+
 void draw_full_maze(struct components *this, char *maze);
+void fill_wall(unsigned char index, unsigned char wall);
+
 #endif

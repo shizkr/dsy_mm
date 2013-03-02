@@ -1,8 +1,17 @@
 #include <gtk/gtk.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include <math.h>
 #include "drawmaze.h"
 #include "drawmouse.h"
 #include "maze.h"
+#include "circular_buffer.h"
+
+#define TAG "DRAWMOUSE: "
+#include "debug.h"
 
 #define M_LENGTH  24
 #define M_WIDTH   10
@@ -22,6 +31,19 @@ struct mouse_shape {
 	int aex;
 	int aey;
 };
+
+/* circular buffer of running mouse points.
+ * Draw these by timer caculation.
+ */
+struct footprint {
+	int x;
+	int y;
+	int angle;
+	unsigned int ms;  /* ms */
+};
+
+#define MAX_MOUSE_FOOTPRINT  1024
+struct circular_buffer *mouse_footprint;
 
 void draw_mouse(int x, int y, int angle)
 {
@@ -88,4 +110,48 @@ void draw_mouse(int x, int y, int angle)
 	*/
 	gtk_widget_queue_draw_area(this.drawingArea,
 			0, 0, 900, 900);
+}
+
+/* Put the footprint of mouse into buffer */
+void put_mouse_running(int x, int y, int angle, unsigned int time)
+{
+	unsigned int *buffer;
+	struct footprint *item;
+
+	if (mouse_footprint == NULL) {
+		buffer = malloc(sizeof(unsigned int *) * MAX_MOUSE_FOOTPRINT);
+		if (buffer == NULL)
+			print_exit("%s:malloc failure\n", __func__);
+		circular_buffer_init(mouse_footprint,
+				buffer, MAX_MOUSE_FOOTPRINT);
+	}
+
+	item = malloc(sizeof(struct footprint));
+	if (item == NULL)
+		print_exit("%s:malloc failure\n", __func__);
+	item->x = x;
+	item->y = y;
+	item->angle = angle;
+	item->ms = time;
+	circular_buffer_write(mouse_footprint, (unsigned int)item);
+}
+
+/* Draw footprint in the buffer if the saved time in the item
+ * is smaller than total timer value.
+ */
+void draw_mouse_running(unsigned int total)
+{
+	struct footprint *item;
+
+	do {
+		circular_buffer_read(mouse_footprint, (unsigned int *)&item);
+
+		/* draw footprint and mouse */
+		/* FIXME: draw footprint */
+		draw_mouse(item->x, item->y, item->angle);
+
+		if (item->ms >= total)
+			break;
+	} while (!circular_buffer_empty(mouse_footprint));
+	free(item);
 }

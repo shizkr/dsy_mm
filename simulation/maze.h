@@ -1,6 +1,8 @@
 #ifndef MAZE_H
 #define MAZE_H
 
+#include <gtk/gtk.h>
+
 struct components {
     GtkWidget *window;
     GtkWidget *previous;
@@ -15,4 +17,5 @@ extern struct components this;
 
 void gui_init(int argc, char *argv[]);
 void init_draw_maze(char *maze);
+GdkGC *gui_set_color(char *color);
 #endif
