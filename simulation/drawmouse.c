@@ -143,6 +143,9 @@ void draw_mouse_running(unsigned int total)
 {
 	struct footprint *item;
 
+	if (circular_buffer_empty(mouse_footprint))
+		return;
+
 	do {
 		circular_buffer_read(mouse_footprint, (unsigned int *)&item);
 
@@ -152,6 +155,10 @@ void draw_mouse_running(unsigned int total)
 
 		if (item->ms >= total)
 			break;
+
+		free(item);
+
 	} while (!circular_buffer_empty(mouse_footprint));
+
 	free(item);
 }
