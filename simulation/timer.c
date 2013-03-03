@@ -7,17 +7,24 @@
 #include <gtk/gtk.h>
 
 #include "run_mouse.h"
+#include "drawmouse.h"
 #include "timer.h"
 
 #define TAG "timer: "
 #include "debug.h"
 
+#ifdef DEBUG
+static int debug_flag = DEBUG_SEARCH;
+#endif
+
 static gboolean timer_handler(gpointer data)
 {
 	char *maze_file = (char *)data;
+#ifdef DEBUG
 	static int count;
+#endif
 
-	printf("=>timer expired %d times\n", ++count);
+	print_dbg(DEBUG_SEARCH, "=>timer expired %d times\n", ++count);
 	if (simul_mouse_search_run(maze_file) == 5)
 		return 0;
 
@@ -26,8 +33,10 @@ static gboolean timer_handler(gpointer data)
 
 void run_timer(char *maze_file)
 {
+#ifdef DEBUG
 	time_t t1, t2;
 	double elapsed;
+#endif
 
 	if (maze_file == NULL)
 		print_exit("%s: maze_file is NULL.\n", __func__);

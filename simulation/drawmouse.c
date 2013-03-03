@@ -13,6 +13,10 @@
 #define TAG "DRAWMOUSE: "
 #include "debug.h"
 
+#ifdef DEBUG
+static int debug_flag = DEBUG_SEARCH | DEBUG_BINTREE | DEBUG_S_LINK;
+#endif
+
 #define M_LENGTH  24
 #define M_WIDTH   10
 
@@ -39,7 +43,7 @@ struct footprint {
 	int x;
 	int y;
 	int angle;
-	unsigned int ms;  /* ms */
+	double ms;  /* ms */
 };
 
 #define MAX_MOUSE_FOOTPRINT  1024
@@ -54,7 +58,7 @@ void draw_mouse(int x, int y, int angle)
 	static int init;
 	static struct mouse_shape m;
 
-	printf("%s: %d, %d\n", __func__, x, y);
+	print_dbg(DEBUG_SEARCH, "%s: %d, %d\n", __func__, x, y);
 	if (!init)
 		init = 1;
 	else {
@@ -112,15 +116,18 @@ void draw_mouse(int x, int y, int angle)
 			0, 0, 900, 900);
 }
 
-/* Put the footprint of mouse into buffer */
-void put_mouse_running(int x, int y, int angle, unsigned int time)
+/* Put the footprint of mouse into buffer
+ * time : Second unti
+ */
+void put_mouse_running(int x, int y, int angle, double time)
 {
 	unsigned int *buffer;
 	struct footprint *item;
 
 	if (mouse_footprint == NULL) {
 		buffer = malloc(sizeof(unsigned int *) * MAX_MOUSE_FOOTPRINT);
-		if (buffer == NULL)
+		mouse_footprint = malloc(sizeof(struct circular_buffer));
+		if (buffer == NULL || mouse_footprint == NULL)
 			print_exit("%s:malloc failure\n", __func__);
 		circular_buffer_init(mouse_footprint,
 				buffer, MAX_MOUSE_FOOTPRINT);
@@ -134,31 +141,38 @@ void put_mouse_running(int x, int y, int angle, unsigned int time)
 	item->angle = angle;
 	item->ms = time;
 	circular_buffer_write(mouse_footprint, (unsigned int)item);
+
+	print_dbg(DEBUG_SEARCH, "%s X:%d, Y:%d, ang:%d, time:%f\n",
+			__func__, x, y, angle, time);
 }
 
 /* Draw footprint in the buffer if the saved time in the item
  * is smaller than total timer value.
  */
-void draw_mouse_running(unsigned int total)
+int draw_mouse_running(double total)
 {
+	int cnt = 0;
 	struct footprint *item;
 
-	if (circular_buffer_empty(mouse_footprint))
-		return;
+	if (!mouse_footprint || circular_buffer_empty(mouse_footprint))
+		return 0;
 
 	do {
 		circular_buffer_read(mouse_footprint, (unsigned int *)&item);
+		cnt++;
 
 		/* draw footprint and mouse */
 		/* FIXME: draw footprint */
 		draw_mouse(item->x, item->y, item->angle);
 
-		if (item->ms >= total)
+		if (item->ms >= total) {
+			free(item);
 			break;
+		}
 
 		free(item);
 
 	} while (!circular_buffer_empty(mouse_footprint));
 
-	free(item);
+	return cnt;
 }
