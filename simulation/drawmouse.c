@@ -76,9 +76,12 @@ void draw_mouse(int x, int y, int angle)
 
 	cal_x = sin(degree_to_radian((double)angle)) *
 		(double)(M_LENGTH/2);
+
 	cal_y = cos(degree_to_radian((double)angle)) *
 		(double)(M_LENGTH/2);
 	m.tx = rx + (int)cal_x;
+
+
 	m.ty = ry - (int)cal_y;
 	m.bx = rx - (int)cal_x;
 	m.by = ry + (int)cal_y;
@@ -108,6 +111,10 @@ void draw_mouse(int x, int y, int angle)
 				m.tx, m.ty, m.rx, m.ry);
 	gdk_draw_line(this.pixMap, this.drawingArea->style->black_gc,
 				m.tx, m.ty, m.bx, m.by);
+
+	/* footprint */
+	gdk_draw_line(this.pixMap, this.drawingArea->style->black_gc,
+				rx+1, ry+1, rx+1, ry+1);
 	/*
 	gtk_widget_queue_draw_area(this.drawingArea,
 			m.asx, m.asy, m.aex, m.aey);
