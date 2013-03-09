@@ -13,8 +13,8 @@
 #ifdef MAZE_GUI
 #include <gtk/gtk.h>
 #include "maze.h"
-#include "drawmaze.h"
-#include "drawmouse.h"
+#include "draw_maze.h"
+#include "draw_mouse.h"
 #endif
 
 #define TAG "simul: "

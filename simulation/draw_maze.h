@@ -1,10 +1,17 @@
+/*
+ * Support drawing polls and walls and maze
+ *
+ * Copyright (c) 2013 Denny Yang <denny.ds.yang@gmail.com>
+ *
+ */
+
 #ifndef DRAWMAZE_H
 #define DRAWMAZE_H
 
 #include "maze.h"
 
-#define START_WIN_X 20
-#define START_WIN_Y 20
+#define WIN_X_OFFSET 20
+#define WIN_Y_OFFSET 20
 
 #define BLOCK_LEN   48
 #define POLL_LEN    6
@@ -23,6 +30,13 @@ struct line {
 	int start_y;
 	int end_x;
 	int end_y;
+};
+
+struct rectangle {
+	int xl;
+	int xr;
+	int yt;
+	int yb;
 };
 
 void draw_full_maze(struct components *this, char *maze);

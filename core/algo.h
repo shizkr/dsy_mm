@@ -1,3 +1,10 @@
+/*
+ * Solve maze problem by contour map
+ *
+ * Copyright (c) 2013 Denny Yang <denny.ds.yang@gmail.com>
+ *
+ */
+
 #ifndef ALGO_H
 #define ALGO_H
 
@@ -82,22 +89,10 @@ enum SEARCH_TYPE {
 extern char maze_search[MAZEMAX];
 extern char contour_map[MAZEMAX];
 
-/*
- * Functions
- */
-
-/* Initialize maze memory to have known maze information */
 void initialize_maze(char *maze);
-
 void print_map(char *map);
-
 void draw_contour(char *maze, char *map,
 		enum SEARCH_TYPE type, unsigned char pos);
-
-/* maze: maze array pointer
- * map: contour maze array pointer
- * pos_st: current mouse position x/y 8 bit index
- */
 struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 		unsigned char abs_dir);
 unsigned char *gen_frbl_from_node(struct s_link *sl_node);
@@ -108,4 +103,5 @@ struct s_link *find_fastest_path(struct s_link *pathes);
 void save_wallinfo_to_maze(unsigned char index, unsigned char wall);
 int is_goal(unsigned char index);
 void free_top_node_contour_tree(void);
+
 #endif

@@ -5,8 +5,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "drawmaze.h"
-#include "drawmouse.h"
+#include "draw_maze.h"
+#include "draw_mouse.h"
 #include "maze.h"
 #include "circular_buffer.h"
 
@@ -51,8 +51,8 @@ struct circular_buffer *mouse_footprint;
 
 void draw_mouse(int x, int y, int angle)
 {
-	int zero_x = START_WIN_X + BLOCK_LEN/2;
-	int zero_y = START_WIN_Y + 15*BLOCK_LEN + BLOCK_LEN/2;
+	int zero_x = WIN_X_OFFSET + BLOCK_LEN/2;
+	int zero_y = WIN_Y_OFFSET + 15*BLOCK_LEN + BLOCK_LEN/2;
 	int rx, ry;
 	double cal_x, cal_y;
 	static int init;

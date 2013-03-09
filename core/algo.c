@@ -1,3 +1,10 @@
+/*
+ * Solve maze problem by contour map
+ *
+ * Copyright (c) 2013 Denny Yang <denny.ds.yang@gmail.com>
+ *
+ */
+
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -19,14 +26,20 @@ static int debug_flag;
 /* = DEBUG_SEARCH | DEBUG_BINTREE | DEBUG_S_LINK; */
 #endif
 
+/* circular ring buffer max definition */
+#define CONTOUR_CB_BUFFER_MAX   128
+
 /* Memorize maze information */
 char maze_search[MAZEMAX];
 char contour_map[MAZEMAX];
 
-/* delta index of NESW from current x, y index */
+/* Delta index of NESW from current x, y index */
 static const char maze_dxy[4] = { 0x01, 0x10, -0x01, -0x10 };
 
 static struct btree_node *contour_tree;
+
+/* Temporary circular ring buffer for contour map */
+static unsigned int contour_cb_buffer[CONTOUR_CB_BUFFER_MAX];
 
 /*
  * Functions
@@ -102,14 +115,11 @@ void draw_contour(char *maze, char *map,
 	int index;
 	unsigned int item;
 	char found_mouse = 0;
-	unsigned int *buffer;
 	struct circular_buffer *cb, contour_buffer;
 
-	buffer = malloc(sizeof(unsigned int) * 128);
-	if (buffer == NULL)
-		print_exit("%s:malloc failure\n", __func__);
 	cb = &contour_buffer;
-	circular_buffer_init(cb, buffer, 128);
+	circular_buffer_init(cb, contour_cb_buffer,
+			CONTOUR_CB_BUFFER_MAX);
 
 	/* Uninitialized contour map */
 	memset(map, 0, MAZEMAX);
@@ -179,8 +189,6 @@ void draw_contour(char *maze, char *map,
 		print_exit("%s couldn't find mouse location\n",
 				__func__);
 	}
-
-	free(buffer);
 }
 
 static int gen_bin_tree_tail(char *maze, char *map,

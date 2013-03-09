@@ -5,7 +5,8 @@
 #include <string.h>
 #include "circular_buffer.h"
 
-void circular_buffer_init(struct circular_buffer *cb, unsigned int *items, int size)
+void circular_buffer_init(struct circular_buffer *cb,
+		unsigned int *items, int size)
 {
 	cb->size = size;
 	cb->start = 0;

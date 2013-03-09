@@ -16,8 +16,8 @@ CORE_SRC = core/bin_tree.c \
 
 # it's for GUI simulation program only
 GUI_SRC = simulation/maze.c \
-		  simulation/drawmaze.c \
-		  simulation/drawmouse.c
+		  simulation/draw_maze.c \
+		  simulation/draw_mouse.c
 
 # it's for non-GUI simulation program only
 CORE_SIMUL = simulation/run_mouse.c \

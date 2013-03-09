@@ -1,7 +1,7 @@
 #include <gtk/gtk.h>
 #include "algo.h"
 #include "maze.h"
-#include "drawmaze.h"
+#include "draw_maze.h"
 
 struct components this;
 

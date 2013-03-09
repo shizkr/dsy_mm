@@ -10,8 +10,8 @@
 #include "diagonal.h"
 
 #ifdef MAZE_GUI
-#include "drawmouse.h"
-#include "drawmaze.h"
+#include "draw_mouse.h"
+#include "draw_maze.h"
 #include "timer.h"
 #endif
 

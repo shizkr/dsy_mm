@@ -7,7 +7,7 @@
 #include <gtk/gtk.h>
 
 #include "run_mouse.h"
-#include "drawmouse.h"
+#include "draw_mouse.h"
 #include "timer.h"
 
 #define TAG "timer: "
