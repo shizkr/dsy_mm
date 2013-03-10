@@ -10,8 +10,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "circular_buffer.h"
-#include "bin_tree.h"
+#include "memory.h"
 #include "algo.h"
 #include "diagonal.h"
 
@@ -158,6 +157,12 @@ void draw_contour(char *maze, char *map,
 		break;
 	}
 
+	/* Get one contour number from circular buffer.
+	 * Put next higher value in next block if there is
+	 * no wall to there and save it inti circular buffer.
+	 * If contour map reaches to current mouse or
+	 * circular buffer is empty then it's done.
+	 */
 	while (!circular_buffer_empty(cb) && !found_mouse) {
 		circular_buffer_read(cb, &item);
 		index = get_contour_index(item);

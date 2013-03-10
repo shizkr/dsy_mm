@@ -1,7 +1,23 @@
-#ifndef BIN_TREE_H
-#define BIN_TREE_H
+#ifndef MEMORY_H
+#define MEMORY_H
 
 #define MAX_BT_NODE_SIZE   512
+
+#ifdef DEBUG_MEMORY
+#define mmalloc(x) malloc_debug(x, __func__, __LINE__)
+#define mfree(x) free_debug(x, __func__, __LINE__)
+#else
+#define mmalloc(x) malloc(x)
+#define mfree(x) free(x)
+#endif
+
+struct circular_buffer
+{
+	int size;
+	int start;
+	int end;
+	unsigned int *items;
+};
 
 /*
  * bt_node description
@@ -36,4 +52,15 @@ struct s_link *s_link_alloc(struct btree_node *bt_node);
 void add_sl_node(struct s_link **list, struct s_link *node);
 void sl_node_free(struct s_link *head);
 void debug_sl_node(struct s_link *list);
+
+void circular_buffer_init(struct circular_buffer *cb, unsigned int *items, int size);
+int circular_buffer_full(struct circular_buffer *cb);
+inline void circular_buffer_read(struct circular_buffer *cb, unsigned int *item);
+inline void circular_buffer_write(struct circular_buffer *cb, unsigned int item);
+int circular_buffer_empty(struct circular_buffer *cb);
+
+#ifdef DEBUG_MEMORY
+void *malloc_debug(size_t size, const char *func, int line);
+void free_debug(void *ptr, const char *func, int line);
+#endif
 #endif

@@ -8,7 +8,7 @@
 #include "draw_maze.h"
 #include "draw_mouse.h"
 #include "maze.h"
-#include "circular_buffer.h"
+#include "memory.h"
 
 #define TAG "DRAWMOUSE: "
 #include "debug.h"

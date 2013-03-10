@@ -4,6 +4,7 @@
 #include <string.h>
 #include "algo.h"
 #include "diagonal.h"
+#include "memory.h"
 
 #define TAG "DIAGONAL: "
 #include "debug.h"
@@ -129,7 +130,8 @@ static int diag_node_cnt;
 
 static struct diagonal_node *diag_node_alloc(void)
 {
-	struct diagonal_node *node = malloc(sizeof(struct diagonal_node));
+	struct diagonal_node *node =
+		mmalloc(sizeof(struct diagonal_node));
 	if (node == NULL)
 		print_exit("%s: malloc failure!\n", __func__);
 	memset(node, 0, sizeof(struct diagonal_node));
@@ -308,7 +310,7 @@ void diagonal_pattern_tree_init(unsigned int *load_time)
 
 	/* Add forward path as maximum 15 */
 	memset(pattern, FD, sizeof(pattern));
-	diag_item = malloc(sizeof(struct diagonal_type));
+	diag_item = mmalloc(sizeof(struct diagonal_type));
 	if (diag_item == NULL)
 		print_exit("%s: malloc failure!\n", __func__);
 	diag_item->pttn = pattern;
@@ -354,7 +356,7 @@ void diagonal_pattern_tree_init(unsigned int *load_time)
 		diagonal_pattern_tree_add(list, diag_item,
 				load_time, idx);
 	}
-	free(diag_item);
+	mfree(diag_item);
 
 	if (diagonal_pattern_tree_verify())
 		print_exit("%s is failed!!!\n", __func__);

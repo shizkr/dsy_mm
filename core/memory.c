@@ -2,10 +2,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "bin_tree.h"
-#include "circular_buffer.h"
+#include "memory.h"
 
-#define TAG "BIN_TREE: "
+#define TAG "MEMORY: "
 #include "debug.h"
 
 #ifdef DEBUG
@@ -19,9 +18,56 @@ static int bt_node_cnt;
 static int s_link_cnt;
 #endif
 
+#ifdef DEBUG_MEMORY
+#define MAGIC 0x3412ABCD
+struct alloc_head {
+	int size;
+	int magic;
+};
+
+static int memory_alloc_size;
+static int max_alloc_size;
+
+void *malloc_debug(size_t size, const char *func, int line)
+{
+	struct alloc_head *ptr;
+
+	memory_alloc_size += size;
+	ptr = malloc(size+sizeof(struct alloc_head));
+	ptr->size = size;
+	ptr->magic = MAGIC;
+
+	if (max_alloc_size < memory_alloc_size)
+		max_alloc_size = memory_alloc_size;
+
+	printf("%s:%d:%s %08X s:%d max:%d\n",
+			func, line, __func__,
+			(unsigned int)ptr, memory_alloc_size,
+			max_alloc_size);
+	return (void *)((unsigned int)ptr + sizeof(struct alloc_head));
+}
+
+void free_debug(void *ptr, const char *func, int line)
+{
+	struct alloc_head *head;
+
+	head = (struct alloc_head *)(ptr - sizeof(struct alloc_head));
+	if (head->magic != MAGIC) {
+		print_exit("%s: pointer %08X is not valid memory!\n",
+				__func__, (unsigned int)ptr);
+	}
+
+	memory_alloc_size -= head->size;
+	printf("%s:%d:%s: %08X s:%d\n",
+			func, line, __func__,
+			(unsigned int)head, memory_alloc_size);
+	free(head);
+}
+#endif
+
 struct btree_node *bt_node_alloc(unsigned char pos, unsigned char abs_dir)
 {
-	struct btree_node *node = malloc(sizeof(struct btree_node));
+	struct btree_node *node = mmalloc(sizeof(struct btree_node));
 
 	if (node == NULL)
 		print_exit("malloc failure!\n");
@@ -62,7 +108,7 @@ void free_bt_node_list(struct btree_node *head)
 	unsigned int *buffer;
 	struct circular_buffer *cb, bt_node_buffer;
 
-	buffer = malloc(sizeof(unsigned int) * MAX_BT_NODE_SIZE);
+	buffer = mmalloc(sizeof(unsigned int) * MAX_BT_NODE_SIZE);
 	if (!buffer)
 		print_exit("%s: malloc failure.\n", __func__);
 
@@ -78,7 +124,7 @@ void free_bt_node_list(struct btree_node *head)
 		if (node->right)
 			circular_buffer_write(cb, (unsigned int)node->right);
 
-		free(node);
+		mfree(node);
 #ifdef DEBUG
 		bt_node_cnt--;
 		print_dbg(DEBUG_BINTREE, "Existing node %d\n",
@@ -86,12 +132,12 @@ void free_bt_node_list(struct btree_node *head)
 #endif
 	}
 
-	free(buffer);
+	mfree(buffer);
 }
 
 struct s_link *s_link_alloc(struct btree_node *bt_node)
 {
-	struct s_link *node = malloc(sizeof(struct s_link));
+	struct s_link *node = mmalloc(sizeof(struct s_link));
 	if (node == NULL)
 		print_exit("malloc failure!\n");
 	node->bt_node = bt_node;
@@ -151,7 +197,7 @@ void sl_node_free(struct s_link *head)
 
 	while (head) {
 		node = head->node;
-		free(head);
+		mfree(head);
 #ifdef DEBUG
 		s_link_cnt--;
 #endif
@@ -159,4 +205,40 @@ void sl_node_free(struct s_link *head)
 	}
 	print_dbg(DEBUG_S_LINK, "Existing s_link node %d\n",
 			s_link_cnt);
+}
+
+void circular_buffer_init(struct circular_buffer *cb,
+		unsigned int *items, int size)
+{
+	cb->size = size;
+	cb->start = 0;
+	cb->end = 0;
+	cb->items = items;
+}
+
+int circular_buffer_full(struct circular_buffer *cb)
+{
+	return ((cb->end + 1) % cb->size == cb->start);
+}
+
+inline void circular_buffer_read(struct circular_buffer *cb, unsigned int *item)
+{
+	*item = cb->items[cb->start];
+	cb->start = (cb->start + 1) % cb->size;
+}
+
+inline void circular_buffer_write(struct circular_buffer *cb, unsigned  int item)
+{
+	cb->items[cb->end] = item;
+	cb->end = (cb->end + 1) % cb->size;
+	if (cb->end == cb->start) {
+		printf("%s: circular buffer over-written.\n", __func__);
+		cb->start = (cb->start + 1) % cb->size;
+		exit(1);
+	}
+}
+
+int circular_buffer_empty(struct circular_buffer *cb)
+{
+	return cb->end == cb->start;
 }

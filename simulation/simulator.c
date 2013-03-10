@@ -3,8 +3,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "circular_buffer.h"
-#include "bin_tree.h"
+#include "memory.h"
 #include "algo.h"
 #include "diagonal.h"
 #include "run_mouse.h"

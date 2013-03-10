@@ -25,7 +25,7 @@ static gboolean timer_handler(gpointer data)
 #endif
 
 	print_dbg(DEBUG_SEARCH, "=>timer expired %d times\n", ++count);
-	if (simul_mouse_search_run(maze_file) == 5)
+	if (simul_mouse_search_run(maze_file) == 2)
 		return 0;
 
 	return 1;

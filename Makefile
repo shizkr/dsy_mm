@@ -1,15 +1,14 @@
 PKG_CONFIG=`pkg-config --cflags --libs gtk+-2.0`
 CC=/usr/bin/gcc -g -Wall
 CINCLUDE = -Icore -Isimulation
-CFLAGS = -DDEBUG
+CFLAGS = -DDEBUG -DDEBUG_MEMORY
 LDFLAGS=$(PKG_CONFIG) $(CFLAGS) $(CINCLUDE)
 
 all: runsimul gentable
 core: core_simul gentable
 
 # core common files for simulator and real mouse
-CORE_SRC = core/bin_tree.c \
-		   core/circular_buffer.c \
+CORE_SRC = core/memory.c \
 		   core/algo.c \
 		   core/load_table.c \
 		   core/diagonal.c
