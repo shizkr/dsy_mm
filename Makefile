@@ -46,6 +46,9 @@ gentable:
 	$(CC) $(GENTABLE_SRC) -o gentable $(LDFLAGS)
 PHONY += gentable
 
+test: test.c
+	$(CC) test.c -o test $(LDFLAGS)
+
 clean:
 	@rm -f runsimul gentable
 	@rm -f cscope*

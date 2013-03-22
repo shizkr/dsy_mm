@@ -24,3 +24,9 @@ out
 gentable
 sample
 runsimul
+test
+
+*.bin
+*.elf
+*.lst
+*.o
