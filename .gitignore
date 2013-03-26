@@ -30,3 +30,5 @@ test
 *.elf
 *.lst
 *.o
+*.out
+*.map

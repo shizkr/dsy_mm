@@ -61,10 +61,12 @@ SRC = $(SAMPLE) $(HW) $(LIB)
 TARGET = main.bin
 EXECUTABLE = main.elf
 
-all: run 
+all: run
 
 clean:
-	-rm -f main.lst *.o main.elf main.lst main.bin
+	-rm -f *.o $(TARGET) $(EXECUTABLE) $(EXECUTABLE:%.elf=%.map) $(EXECUTABLE:%.elf=%.lst)
+	-rm -f $(EXECUTABLE:%.elf=%.out)
+	-rm -f $(OBJS)
 
 run: $(TARGET)
 	$(STM32FLASH) $(TARGET)
@@ -73,6 +75,7 @@ $(TARGET): $(EXECUTABLE)
 	@echo "...copying"
 	$(CP) $(CPFLAGS) $(EXECUTABLE) $(TARGET)
 	$(OD) $(ODFLAGS) $(EXECUTABLE)> $(EXECUTABLE:%.elf=%.lst)
+	$(LD) $(ODFLAGS) $(EXECUTABLE) -M -o $(EXECUTABLE:%.elf=%.out)> $(EXECUTABLE:%.elf=%.map)
 
 $(EXECUTABLE): $(SRC) $(STARTUP)
 	@echo "..linking"
