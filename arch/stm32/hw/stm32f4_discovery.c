@@ -25,7 +25,7 @@ NVIC_InitTypeDef   NVIC_InitStructure;
 void STM_EVAL_LEDInit(Led_TypeDef Led)
 {
   GPIO_InitTypeDef  GPIO_InitStructure;
-  
+
   /* Enable the GPIO_LED Clock */
   RCC_AHB1PeriphClockCmd(GPIO_CLK[Led], ENABLE);
 
@@ -40,12 +40,12 @@ void STM_EVAL_LEDInit(Led_TypeDef Led)
 
 /**
   * @brief  Turns selected LED On.
-  * @param  Led: Specifies the Led to be set on. 
+  * @param  Led: Specifies the Led to be set on.
   *   This parameter can be one of following parameters:
   *     @arg LED4
   *     @arg LED3
   *     @arg LED5
-  *     @arg LED6  
+  *     @arg LED6
   * @retval None
   */
 void STM_EVAL_LEDOn(Led_TypeDef Led)
@@ -118,7 +118,7 @@ void STM_EVAL_PBInit(Button_TypeDef Button, ButtonMode_TypeDef Button_Mode)
     /* Configure Button EXTI line */
     EXTI_InitStructure.EXTI_Line = BUTTON_EXTI_LINE[Button];
     EXTI_InitStructure.EXTI_Mode = EXTI_Mode_Interrupt;
-    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;  
+    EXTI_InitStructure.EXTI_Trigger = EXTI_Trigger_Rising;
     EXTI_InitStructure.EXTI_LineCmd = ENABLE;
     EXTI_Init(&EXTI_InitStructure);
 
@@ -135,7 +135,7 @@ void STM_EVAL_PBInit(Button_TypeDef Button, ButtonMode_TypeDef Button_Mode)
 /**
   * @brief  Returns the selected Button state.
   * @param  Button: Specifies the Button to be checked.
-  *   This parameter should be: BUTTON_USER  
+  *   This parameter should be: BUTTON_USER
   * @retval The Button GPIO pin value.
   */
 uint32_t STM_EVAL_PBGetState(Button_TypeDef Button)

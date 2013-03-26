@@ -22,7 +22,6 @@ out
 *.log
 
 gentable
-sample
 runsimul
 test
 
