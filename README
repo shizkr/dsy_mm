@@ -1,5 +1,7 @@
 * Next work
 - add smooth turn and diagonal turn simulation
+- 1st run to goal is ok but return path must find the fastest pathjbefore arriving
+  to start point. 3/25/2013
 
 * Done - 2/22/2013
 - file out for pattern load weight table generation tool
