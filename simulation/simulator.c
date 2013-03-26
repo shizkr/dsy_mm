@@ -75,6 +75,8 @@ int main(int argc, char *argv[])
 
 	print_info("Initialized maze\n");
 	initialize_maze(maze_search);
+	/* Make sure input file */
+	initialize_maze(maze_file);
 	print_map(maze_search);
 	print_map(maze_search);
 

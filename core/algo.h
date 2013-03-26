@@ -37,8 +37,16 @@
 #define LD	3
 #define NOD 4  /* Invalid direction */
 
+#if defined(CONFIG_4X4)
+#define MAX_X    4
+#define MAX_Y    4
+#elif defined(CONFIG_8X8)
+#define MAX_X    8
+#define MAX_Y    8
+#elif defined(CONFIG_16X16)
 #define MAX_X	16
 #define MAX_Y	16
+#endif
 
 /* direction bit through direction index */
 #define wall_bit(direct) (0x01 << (direct))
@@ -70,9 +78,13 @@
 #define absolute_direction(curr_dir, rel_dir) \
 	(((curr_dir)+(rel_dir)) & 3)
 
-/* MAZE SEARCH TYPE */
+/* MAZE SEARCH type
+ * low 4 bit is y, high 4 bit is x
+ * other types will use out of that combination.
+ * 2 ^ 10 = 1024 (2bit is reserved)
+ */
 enum SEARCH_TYPE {
-	TO_GOAL_4X4 = 0,
+	TO_GOAL_4X4 = 1024,
 	TO_START_4X4,
 	TO_GOAL_5X5,
 	TO_START_5X5,
@@ -103,5 +115,10 @@ struct s_link *find_fastest_path(struct s_link *pathes);
 void save_wallinfo_to_maze(unsigned char index, unsigned char wall);
 int is_goal(unsigned char index);
 void free_top_node_contour_tree(void);
-
+unsigned int another_unknown_fastest_path(void);
+unsigned int get_known_path_pos(struct s_link *sl_node);
+int is_known_path(struct s_link *sl_node);
+unsigned char *find_maze_fastest_path(
+	unsigned char cur_mouse_pos, char cur_mouse_dir,
+	unsigned int search_type, struct s_link **f_node);
 #endif

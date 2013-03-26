@@ -32,6 +32,8 @@ static int debug_flag;
 char maze_search[MAZEMAX];
 char contour_map[MAZEMAX];
 
+extern unsigned int *diagonal_weight_time_table;
+
 /* Delta index of NESW from current x, y index */
 static const char maze_dxy[4] = { 0x01, 0x10, -0x01, -0x10 };
 
@@ -108,7 +110,7 @@ void print_full(char *map)
  *   pos  : current mouse location in the maze
  */
 void draw_contour(char *maze, char *map,
-		enum SEARCH_TYPE type, unsigned char pos)
+		unsigned int type, unsigned char pos)
 {
 	int i, contour_lvl = 1;
 	int index;
@@ -152,8 +154,12 @@ void draw_contour(char *maze, char *map,
 		circular_buffer_write(cb, gen_contour_pos(contour_lvl, 0x00));
 		break;
 	default:
-		print_exit("Unsupported mouse search type %d!!",
-				type);
+		if (type < MAZEMAX) {
+			map[type] = contour_lvl;
+			circular_buffer_write(cb, gen_contour_pos(contour_lvl, type));
+		} else {
+			print_exit("Invalid target goal index!\n");
+		}
 		break;
 	}
 
@@ -364,8 +370,8 @@ struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 
 	/* Init first node from current mouse location */
 	if (contour_tree != NULL)
-		print_exit("%s:Please free the binary tree before creating!\n",
-				__func__);
+		free_top_node_contour_tree();
+
 	contour_tree = bt_node_alloc(pos_st, abs_dir);
 	tail_list = s_link_alloc(contour_tree);
 
@@ -397,8 +403,10 @@ struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 		bt_node = sl_node->bt_node;
 		idx = 255;
 
+#if defined(CONFIG_16X16)
 		/* diagonal path has to go 1 more block in the goal */
 		path[idx--] = FD;
+#endif
 		while (bt_node->parent) {
 			if (bt_node->dir <= LD)
 				path[idx--] = bt_node->dir;
@@ -422,11 +430,83 @@ struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
 	return tail_list;
 }
 
+/* check memorized maze block information from the fastest path.
+ * if the path on the fastest from current mouse is all known, then
+ * return 1. otherwise return 0.
+ */
+int is_known_path(struct s_link *sl_node)
+{
+	struct btree_node *bt_node;
+
+	bt_node = sl_node->bt_node;
+
+	while (bt_node->parent) {
+		if ((maze_search[bt_node->pos]&0xF0) != 0xF0)
+			return 0;
+		bt_node = bt_node->parent;
+	}
+	return 1;
+}
+
+/* return last known block position right before unknown block.
+ */
+unsigned int get_known_path_pos(struct s_link *sl_node)
+{
+	struct btree_node *bt_node;
+	char unknown = 0;
+	unsigned int ret_pos = 0;
+
+	bt_node = sl_node->bt_node;
+
+	while (bt_node->parent) {
+		if ((maze_search[bt_node->pos]&0xF0) != 0xF0)
+			unknown = 1;
+		else {
+			if (unknown == 1)
+				ret_pos = (unsigned int)bt_node->pos;
+			unknown = 0;
+		}
+		bt_node = bt_node->parent;
+	}
+
+	return ret_pos;
+}
+
+/* On return run of 1st running, search all the possible pathes.
+ * Find the fastest path on 1st return run. While mouse is returning
+ * if there is another fastest path from start to goal, then search
+ * the unknown maze blocks.
+ */
+unsigned int another_unknown_fastest_path(void)
+{
+	struct s_link *f_node;
+	unsigned char *path_array;
+
+	/* find next block from the algorithm based on current
+	 * maze information. reurn array will have FRBL type.
+	 */
+	path_array = find_maze_fastest_path(0, NI,
+#if defined(CONFIG_4X4)
+			TO_GOAL_4X4,
+#elif defined(CONFIG_8X8)
+			TO_GOAL_8X8,
+#elif defined(CONFIG_16X16)
+			TO_GOAL_16X16,
+#endif
+			&f_node);
+
+	if (is_known_path(f_node))
+		return 0;
+
+	/* return next target position */
+	return get_known_path_pos(f_node);
+}
+
 unsigned char *gen_frbl_from_node(struct s_link *sl_node)
 {
 	int idx;
 	struct btree_node *bt_node;
-	static unsigned char path[MAZEMAX + 1];
+	static unsigned char path[MAZEMAX + 2];
 
 	bt_node = sl_node->bt_node;
 	idx = MAZEMAX;
@@ -437,7 +517,9 @@ unsigned char *gen_frbl_from_node(struct s_link *sl_node)
 
 	/* diagonal path has to go 1 more block in the goal */
 	path[idx--] = 0xff; /* end of path */
+#if defined(CONFIG_16X16)
 	path[idx--] = FD;
+#endif
 	while (bt_node->parent) {
 		if (bt_node->dir <= LD)
 			path[idx--] = bt_node->dir;
@@ -595,6 +677,16 @@ int calculate_path_time(unsigned char *path)
 
 			if (!time) {
 				size++;
+
+				/* exceptional case  at the end */
+				if (path[idx+size-1] == 0xff && size == 3) {
+					total_time +=
+					diagonal_weight_time_table[SL_FLR];
+					idx += (size-1);
+					size = 2;
+					break;
+				}
+
 				if (size > MAZEMAX/9 + 4)
 					print_exit(
 					"Error on path finding!\n");
@@ -690,9 +782,59 @@ void save_wallinfo_to_maze(unsigned char index, unsigned char wall)
 
 int is_goal(unsigned char index)
 {
-	if (index == 0x77 || index == 0x87 ||
-			index == 0x78 || index == 0x88)
+#if defined(CONFIG_4X4)
+	if (index == 0x33)
 		return 1;
+#elif defined(CONFIG_8X8)
+	if (index == 0x77)
+		return 1;
+#elif defined(CONFIG_16X16)
+	if (index == 0x77 || index == 0x87 ||
+		index == 0x78 || index == 0x88)
+		return 1;
+#endif
 	return 0;
+}
+
+/* Find fastest path from known maze information
+ * and return the FRBL turn array to the caller.
+ * if first turn is one of RBL, it means that the
+ * mouse has to make back turn or smooth L/R turn.
+ * In that case, no diagonal turns.
+ */
+unsigned char *find_maze_fastest_path(
+	unsigned char cur_mouse_pos, char cur_mouse_dir,
+	unsigned int search_type, struct s_link **f_node)
+{
+	unsigned char *path;
+	struct s_link *mouse_path;
+#ifdef DEBUG
+	int i;
+#endif
+
+	/* draw contour map from the goal */
+	draw_contour(maze_search, contour_map,
+			search_type, cur_mouse_pos);
+	/* generate full binary tree with all pathes */
+	mouse_path = gen_bin_tree(maze_search,
+			contour_map, cur_mouse_pos, cur_mouse_dir);
+	/* find the fastest path and get the node */
+	*f_node = find_fastest_path(mouse_path);
+
+	/* generate FRBL array for the fastest path */
+	path = gen_frbl_from_node(*f_node);
+
+#ifdef DEBUG
+	printf("%s\n", __func__);
+	for (i = 0; path[i] != 0xff; i++)
+		printf("%C",
+			(path[i] == FD) ? 'F' : \
+			((path[i] == RD) ? 'R' : \
+			((path[i] == BD) ? 'B' : \
+			((path[i] == LD) ? 'L' : 'X'))));
+	printf("\n");
+#endif
+
+	return path;
 }
 

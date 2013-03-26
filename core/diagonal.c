@@ -14,6 +14,8 @@ static int debug_flag;
 /* = DEBUG_DIAGNODE; */
 #endif
 
+unsigned int *diagonal_weight_time_table;
+
 /* This structure defines the patterns of
  * diagonal pathes. Totoal 17 patterns including forward
  * pattern can be used to find the diagonal patterns.
@@ -295,6 +297,8 @@ void diagonal_pattern_tree_init(unsigned int *load_time)
 	if (load_time == NULL)
 		load_time = default_load_time;
 
+	diagonal_weight_time_table = load_time;
+
 	/* Generate diagonal node tree for search */
 	for (i = 0; i < P_MAX; i++) {
 		diag_item = &pattern_table[i];
@@ -381,9 +385,13 @@ struct diag_pttn_time_type *diagonal_pattern_search(
 				"node:%d, dir:%d, idx:%d ptr:%08X\n",
 				diag_node->node_num, pattern[i], i,
 				(unsigned int)diag_node);
-		if (pattern[i] > 3)
+		if (pattern[i] > 3) {
+			for (i=0; i< pttn_size; i++)
+				print_error("%d\n", pattern[i]);
 			print_exit("%s(): array index of link in diag_node " \
-					"can't be lager than 3\n", __func__);
+					"can't be lager than 3, v:%d s:%d\n",
+					__func__, pattern[i], pttn_size);
+		}
 		if (diag_node->link[pattern[i]])
 			new_diag_node = diag_node->link[pattern[i]];
 
