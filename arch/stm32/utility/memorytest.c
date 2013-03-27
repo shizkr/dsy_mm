@@ -1,20 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* appropriate definition of _heap and _heap_end has to be done in the linker
- * script*/
-extern int _heap;
-extern int _heap_end;
-int free_memory;
+/* Below function is test only. */
 int memory_alloc_test(void)
 {
 	int *buf = NULL;
+	int size = 0;
 
-	//buf = malloc(4096);
-	if (!buf)
-		return -1;
+	while (1) {
+		buf = malloc(1024);
+		if (!buf) {
+			printf("FREE MEM SIZE:%d\n", size);
+			return -1;
+		}
 
-	//free(buf);
+		size += 1024;
+	}
 
 	return 0;
 }

@@ -33,10 +33,7 @@
 ENTRY(Reset_Handler)
 
 /* Highest address of SRAM */
-_ram_size = 0x20000;    /* end of 128K RAM on AHB bus*/
-_ccm_ram_size = 0x10000; /* 64K of CCM data RAM */
-
-_estack = 0x20010000;
+_estack = 0x20020000;
 _sstack = (_estack - 1024);
 
 /* Generate a link error if heap and stack don't fit into RAM */
@@ -145,7 +142,6 @@ SECTIONS
   .heap (NOLOAD):
   {   
     _heap = . ; 
-    . = . + _Heap_Size;  /* define _Heap_Size at the start of the link file */
     . = ALIGN(4);
     _heap_end = . ; 
   } > RAM 

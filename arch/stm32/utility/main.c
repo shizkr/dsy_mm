@@ -36,8 +36,6 @@ int main(void)
 {
 	unsigned int delay_idx = 500;
 
-	//memory_alloc_test();
-
 	RCC_ClocksTypeDef RCC_Clocks;
 
 	/* Initialize LEDs and User_Button on STM32F4-Discovery */
