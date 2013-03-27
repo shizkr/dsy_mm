@@ -1,27 +1,44 @@
 TCPREFIX = ~/sat/gcc-arm-none-eabi-4_7-2012q4/bin/arm-none-eabi-
 
 CC      = $(TCPREFIX)gcc
-LD      = $(TCPREFIX)ld -v
+LD      = $(TCPREFIX)gcc
 CP      = $(TCPREFIX)objcopy
 OD      = $(TCPREFIX)objdump
 GDBTUI  = $(TCPREFIX)gdbtui
 
-STM32FLASH = ./stm32_flash.pl
+TARGET = main
 
-CINCLUDE = -Ilib/stm32f4xx_stdperiph_driver/inc -Ilib/cmsis/ST/STM32F4xx/Include -Iutility \
+CORE = cortex-m4
+STM32FLASH = ./stm32_flash.pl
+LDSCRIPT = stm32_flash.ld
+
+INCLUDES = -Ilib/stm32f4xx_stdperiph_driver/inc -Ilib/cmsis/ST/STM32F4xx/Include -Iutility \
 		   -Ihw -Ilib/cmsis/Include
 
 DEFS = -DUSE_STDPERIPH_DRIVER -DSTM32F4XX -DMANGUSTA_DISCOVERY -DUSE_USB_OTG_FS -DHSE_VALUE=8000000
+DEFS += -DCORE=40 -DSAVE_FPU
 
 # -mfix-cortex-m4-ldrd should be enabled by default for Cortex M4.
-CFLAGS  =  -I. $(CINCLUDE) -fno-common -O0 -g -mcpu=cortex-m4 -mthumb -Wl,-T,stm32_flash.ld $(DEFS)
-LFLAGS  = -Tstm32_flash.ld -nostartfiles
+AFLAGS  = -mthumb -mcpu=$(CORE) $(INCLUDES)
+CFLAGS  = -mthumb -mcpu=$(CORE) $(INCLUDES)
+CFLAGS += -fno-common -O0 -g -mfloat-abi=soft -mfpu=fpv4-sp-d16 -fsingle-precision-constant
+CFLAGS += -Wl,-T,stm32_flash.ld $(DEFS)
+CFLAGS += -ffunction-sections -fdata-sections -std=gnu99 -Wall -Wno-unused -g -Os
+
+LIBS = -lm -lc -lnosys
+
+LDFLAGS = -mthumb -mcpu=$(CORE)
+LDFLAGS += -nodefaultlibs -nostartfiles
+LDFLAGS += -Wl,-Map,$(TARGET).map -T$(LDSCRIPT)
+LDFLAGS += -Wl,--gc-sections
+
 CPFLAGS = -Obinary
 ODFLAGS = -S
 
 STARTUP = utility/startup_stm32f4xx.s
 
 UTILITY = utility/main.c \
+		 utility/syscalls.c \
 		 utility/system_stm32f4xx.c \
 		 utility/stm32f4xx_it.c
 HW = hw/stm32f4_discovery.c
@@ -52,40 +69,92 @@ LIB =   $(LIBDIR)/misc.c \
 		$(LIBDIR)/stm32f4xx_usart.c \
 		$(LIBDIR)/stm32f4xx_wwdg.c
 
-OBJS = $(UTILITY:%.c=%.o)
-OBJS += $(HW:%.c=%.o)
-OBJS += $(LIB:%.c=%.o)
+SOURCE = $(UTILITY) $(HW) $(LIB) $(STARTUP)
 
-SRC = $(UTILITY) $(HW) $(LIB)
+#---------------------------------------------------
+CSOURCES = $(filter %.c,$(SOURCE))
+ASMSOURCES = $(filter %.s,$(SOURCE))
 
-TARGET = main.bin
-EXECUTABLE = main.elf
+OBJECTS = $(addprefix obj/, $(CSOURCES:.c=.c.o))
+OBJECTS += $(addprefix obj/, $(ASMSOURCES:.s=.s.o))
 
-all: run
+DISASM = $(addprefix disasm/, $(CSOURCES:.c=.c.s)) \
+          $(addprefix disasm/, $(ASMSOURCES:.s=.s.s))
+
+LIBGCC = ${shell ${CC} ${CFLAGS} -print-libgcc-file-name}
+LIBC = ${shell ${CC} ${CFLAGS} -print-file-name=libc.a}
+
+#---------------------------------------------------
+all: $(TARGET).bin
 
 clean:
-	-rm -f *.o $(TARGET) $(EXECUTABLE) $(EXECUTABLE:%.elf=%.map) $(EXECUTABLE:%.elf=%.lst)
-	-rm -f $(EXECUTABLE:%.elf=%.out)
-	-rm -f $(OBJS)
+	-rm -f $(TARGET).elf $(TARGET).bin $(TARGET).map
+	-rm -rf deps
+	-rm -rf obj
 
-run: $(TARGET)
-	$(STM32FLASH) $(TARGET)
+flash: $(TARGET).bin
+	$(STM32FLASH) $(TARGET).bin
 
-$(TARGET): $(EXECUTABLE)
+$(TARGET).bin: $(TARGET).elf
 	@echo "...copying"
-	$(CP) $(CPFLAGS) $(EXECUTABLE) $(TARGET)
-	$(OD) $(ODFLAGS) $(EXECUTABLE)> $(EXECUTABLE:%.elf=%.lst)
-	$(LD) $(ODFLAGS) $(EXECUTABLE) -M -o $(EXECUTABLE:%.elf=%.out)> $(EXECUTABLE:%.elf=%.map)
+	$(CP) $(CPFLAGS) $(TARGET).elf $(TARGET).bin
 
-$(EXECUTABLE): $(SRC) $(STARTUP)
+$(TARGET).elf: $(OBJECTS) $(LDSCRIPT)
 	@echo "..linking"
-	$(CC) $(CFLAGS) $^ -o $@
-
-$(OBJS): $(OBJS:%.o=%.c)
-	@echo ".compiling"
-	$(CC) $(CFLAGS) $< -o $@
+	#$(LD) -T ${LDSCRIPT} ${LDFLAGS} -o $@ $(OBJECTS) $(LIBS) '${LIBC}' '${LIBGCC}'
+	$(LD) -T ${LDSCRIPT} ${CFLAGS} -o $@ $(OBJECTS)
 
 debug:
 	$(GDBTUI) -ex "target remote localhost:3333" \ 
 		-ex "set remote hardware-breakpoint-limit 6" \ 
 		-ex "set remote hardware-watchpoint-limit 4" main.elf
+
+disasm: $(DISASM)
+	arm-none-eabi-objdump -d $(EXECNAME).elf >disasm/$(EXECNAME).s
+
+flash_st:
+	arm-none-eabi-objcopy -O binary $(EXECNAME).elf $(EXECNAME).bin
+	st-flash write $(EXECNAME).bin 0x08000000
+
+obj/%.c.o: %.c
+	$(shell if [ ! -d $(addprefix obj/, $(dir $<)) ]; then mkdir -p $(addprefix obj/, $(dir $<)); fi )
+	$(CC) $(CFLAGS) -c $< -o $@
+
+obj/%.cpp.o: %.cpp
+	$(shell if [ ! -d $(addprefix obj/, $(dir $<)) ]; then mkdir -p $(addprefix obj/, $(dir $<)); fi )
+	$(CC) $(CFLAGS) -c $< -o $@
+
+obj/%.s.o: %.s
+	$(shell if [ ! -d $(addprefix obj/, $(dir $<)) ]; then mkdir -p $(addprefix obj/, $(dir $<)); fi )
+	$(CC) $(CFLAGS) -c $< -o $@
+
+disasm/%.c.s: %.c
+	$(shell if [ ! -d $(addprefix disasm/, $(dir $<)) ]; then mkdir -p $(addprefix disasm/, $(dir $<)); fi )
+	$(CC) $(CFLAGS) -S $< -o $@
+
+disasm/%.cpp.s: %.cpp
+	$(shell if [ ! -d $(addprefix disasm/, $(dir $<)) ]; then mkdir -p $(addprefix disasm/, $(dir $<)); fi )
+	$(CC) $(CFLAGS) -S $< -o $@
+
+disasm/%.s.s: %.s
+	$(shell if [ ! -d $(addprefix disasm/, $(dir $<)) ]; then mkdir -p $(addprefix disasm/, $(dir $<)); fi )
+	$(CC) $(CFLAGS) -S $< -o $@
+
+#----------------------------------------------------------
+deps/%.c.d: %.c
+	$(shell if [ ! -d $(addprefix deps/, $(dir $<)) ]; then mkdir -p $(addprefix deps/, $(dir $<)); fi )
+	$(CC) -M $(CFLAGS) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+deps/%.cpp.d: %.cpp
+	$(shell if [ ! -d $(addprefix deps/, $(dir $<)) ]; then mkdir -p $(addprefix deps/, $(dir $<)); fi )
+	$(CC) -M $(CFLAGS) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+deps/%.s.d: %.s
+	$(shell if [ ! -d $(addprefix deps/, $(dir $<)) ]; then mkdir -p $(addprefix deps/, $(dir $<)); fi )
+	$(CC) -M $(CFLAGS) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$

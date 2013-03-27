@@ -528,8 +528,3 @@ void SystemInit_ExtMemCtl(void)
   
 }
 #endif /* DATA_IN_ExtSRAM */
-
-void _exit(int status) {
-	while (1) {
-	}
-}

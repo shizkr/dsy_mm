@@ -32,12 +32,17 @@
 /* Entry Point */
 ENTRY(Reset_Handler)
 
-/* Highest address of the user mode stack */
-_estack = 0x20020000;    /* end of 128K RAM on AHB bus*/
+/* Highest address of SRAM */
+_ram_size = 0x20000;    /* end of 128K RAM on AHB bus*/
+_ccm_ram_size = 0x10000; /* 64K of CCM data RAM */
+
+_estack = 0x20010000;
+_sstack = (_estack - 1024);
 
 /* Generate a link error if heap and stack don't fit into RAM */
-_Min_Heap_Size = 0;      /* required amount of heap  */
-_Min_Stack_Size = 0x400; /* required amount of stack */
+_Min_Heap_Size = 0;       /* required amount of heap  */
+_Heap_Size = 0x10000;      /* heap size */
+_Min_Stack_Size = 0x2000; /* required amount of stack */
 
 /* Specify the memory areas */
 MEMORY
@@ -137,16 +142,13 @@ SECTIONS
     __bss_end__ = _ebss;
   } >RAM
 
-  /* User_heap_stack section, used to check that there is enough RAM left */
-  ._user_heap_stack :
-  {
+  .heap (NOLOAD):
+  {   
+    _heap = . ; 
+    . = . + _Heap_Size;  /* define _Heap_Size at the start of the link file */
     . = ALIGN(4);
-    PROVIDE ( end = . );
-    PROVIDE ( _end = . );
-    . = . + _Min_Heap_Size;
-    . = . + _Min_Stack_Size;
-    . = ALIGN(4);
-  } >RAM
+    _heap_end = . ; 
+  } > RAM 
 
   /* MEMORY_bank1 section, code must be located here explicitly            */
   /* Example: extern int foo(void) __attribute__ ((section (".mb1text"))); */

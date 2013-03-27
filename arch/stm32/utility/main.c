@@ -6,6 +6,7 @@
 #include "stm32f4xx_flash.h"
 #include "stm32f4_discovery.h"
 #include "stm32f4xx_it.h"
+#include "memorytest.h"
 
 #define TESTRESULT_ADDRESS         0x080FFFFC
 #define ALLTEST_PASS               0x00000000
@@ -34,6 +35,8 @@ void system_beat(void)
 int main(void)
 {
 	unsigned int delay_idx = 500;
+
+	//memory_alloc_test();
 
 	RCC_ClocksTypeDef RCC_Clocks;
 
