@@ -199,7 +199,7 @@ static void simul_mouse_search_return(char *maze_file)
 	case 2:
 		/* Check to the goal */
 		if (is_known_path(f_node)) {
-			return_type = 1;
+			return_type = 0;
 			search_type =
 #if defined(CONFIG_4X4)
 				TO_START_4X4;
