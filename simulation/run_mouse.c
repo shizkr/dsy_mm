@@ -136,17 +136,6 @@ static void simul_mouse_search_goal(char *maze_file,
 	 * it's to free contour tree nodes.
 	 */
 	free_top_node_contour_tree();
-
-#ifdef MAZE_GUI
-	if (cur_mouse_pos == 0x00) {
-		/* Initialize mouse state */
-		cur_mouse_x = 0.0;
-		cur_mouse_y = 0.0;
-		cur_mouse_angle = 0.0;
-		cur_mouse_speed = 0.0;
-		cur_mouse_dir = NI;
-	}
-#endif
 }
 
 static void simul_mouse_search_return(char *maze_file)
@@ -374,11 +363,10 @@ void run_mouse_search(double *mouse_x, double *mouse_y,
 	double dist;
 	double target_v;
 	double total_dist = 0.0;
-	double total_time = 0.0;
 	double delta_dist;
 	double x, y, angle;
 
-	if (mouse_pos == 0.0 && direction == FD &&
+	if (mouse_pos == 0 && direction == FD &&
 		*mouse_speed == 0.0 && *mouse_angle == 0.0) {
 		dist = BLOCK/2.0;
 		target_v = SEARCH_TURN_VELOCITY;
@@ -391,7 +379,6 @@ void run_mouse_search(double *mouse_x, double *mouse_y,
 	} else if (direction == LD) {
 		dist = BLOCK*PI/4.0;
 		target_v = SEARCH_TURN_VELOCITY;
-		target_v = SEARCH_TURN_VELOCITY;
 	} else if (direction == BD) {
 		target_v = SEARCH_TURN_VELOCITY;
 	} else {
@@ -401,7 +388,6 @@ void run_mouse_search(double *mouse_x, double *mouse_y,
 	/* forward direction */
 	if (direction == FD) {
 		while (total_dist < dist && *mouse_speed < target_v) {
-			total_time += TPERIOD;
 			mouse_total_time += TPERIOD;
 			delta_dist = (*mouse_speed * TPERIOD +
 			   0.5 * SEARCH_ACCEL * TPERIOD * TPERIOD);
@@ -430,7 +416,6 @@ void run_mouse_search(double *mouse_x, double *mouse_y,
 			return;
 		else {
 			while (total_dist < dist) {
-				total_time += TPERIOD;
 				mouse_total_time += TPERIOD;
 				delta_dist = (*mouse_speed * TPERIOD +
 				   0.5 * SEARCH_ACCEL * TPERIOD * TPERIOD);
@@ -454,7 +439,6 @@ void run_mouse_search(double *mouse_x, double *mouse_y,
 		}
 	} else if (direction == RD) { /* right turn */
 		while (total_dist < dist) {
-			total_time += TPERIOD;
 			mouse_total_time += TPERIOD;
 			delta_dist = (*mouse_speed * TPERIOD);
 			total_dist += delta_dist;
@@ -520,7 +504,6 @@ void run_mouse_search(double *mouse_x, double *mouse_y,
 
 	} else if (direction == LD) { /* left turn */
 		while (total_dist < dist) {
-			total_time += TPERIOD;
 			mouse_total_time += TPERIOD;
 			delta_dist = (*mouse_speed * TPERIOD);
 			total_dist += delta_dist;
@@ -577,7 +560,7 @@ void run_mouse_search(double *mouse_x, double *mouse_y,
 			*mouse_x +=  (double)BLOCK_LEN/2.0;
 			*mouse_y -=  (double)BLOCK_LEN/2.0;
 			*mouse_angle = 90.0;
-		} else if (*mouse_angle == 270.0) {
+		} else if (*mouse_angle == 270.0) {;
 			*mouse_x -=  (double)BLOCK_LEN/2.0;
 			*mouse_y -=  (double)BLOCK_LEN/2.0;
 			*mouse_angle = 180.0;
@@ -585,10 +568,107 @@ void run_mouse_search(double *mouse_x, double *mouse_y,
 		put_mouse_running((int)*mouse_x, (int)*mouse_y,
 			(int)*mouse_angle, mouse_total_time);
 
-	} else if (direction == BD) { /* left turn */
+	} else if (direction == BD) { /* back turn */
+		/* Move half block before making back turn */
+		dist = BLOCK/2.0;
+		target_v = 0.0;
+		while (total_dist < dist) {
+			mouse_total_time += TPERIOD;
+			delta_dist = (*mouse_speed * TPERIOD +
+			   0.5 * SEARCH_ACCEL * TPERIOD * TPERIOD);
+			total_dist += delta_dist;
+			*mouse_speed -= (SEARCH_ACCEL * TPERIOD);
+
+			/* Stay on lowest speed */
+			if (*mouse_speed < 700.0)
+				*mouse_speed = 700.0;
+
+			/* calculate x, y position */
+			if (*mouse_angle == 0.0)
+				*mouse_y += (delta_dist * SIMUL_DIST_RATE);
+			else if (*mouse_angle == 90.0)
+				*mouse_x += (delta_dist * SIMUL_DIST_RATE);
+			else if (*mouse_angle == 180.0)
+				*mouse_y -= (delta_dist * SIMUL_DIST_RATE);
+			else if (*mouse_angle == 270.0)
+				*mouse_x -= (delta_dist * SIMUL_DIST_RATE);
+
+			if (mouse_total_time >= total_draw_time + DRAW_TIME) {
+				/* save footprint to buffer */
+				put_mouse_running((int)*mouse_x, (int)*mouse_y,
+						(int)*mouse_angle, mouse_total_time);
+				total_draw_time += DRAW_TIME;
+			}
+		}
+
+		/* Simulate back turn */
+		angle = 0.0;
+		while (angle < 180.0) {
+			angle += 30;
+			mouse_total_time += 0.05;
+			put_mouse_running((int)*mouse_x, (int)*mouse_y,
+					(*mouse_angle + angle)/360.0, mouse_total_time);
+		}
+
 		*mouse_angle += 180.0;
 		if (*mouse_angle >= 360.0)
 			*mouse_angle -= 360.0;
+
+		dist = BLOCK/2.0;
+		target_v = SEARCH_TURN_VELOCITY;
+		total_dist = 0.0;
+
+		while (total_dist < dist && *mouse_speed < target_v) {
+			mouse_total_time += TPERIOD;
+			delta_dist = (*mouse_speed * TPERIOD +
+			   0.5 * SEARCH_ACCEL * TPERIOD * TPERIOD);
+			total_dist += delta_dist;
+			*mouse_speed += (SEARCH_ACCEL * TPERIOD);
+
+			/* calculate x, y position */
+			if (*mouse_angle == 0.0)
+				*mouse_y += (delta_dist * SIMUL_DIST_RATE);
+			else if (*mouse_angle == 90.0)
+				*mouse_x += (delta_dist * SIMUL_DIST_RATE);
+			else if (*mouse_angle == 180.0)
+				*mouse_y -= (delta_dist * SIMUL_DIST_RATE);
+			else if (*mouse_angle == 270.0)
+				*mouse_x -= (delta_dist * SIMUL_DIST_RATE);
+
+			if (mouse_total_time >= total_draw_time + DRAW_TIME) {
+				/* save footprint to buffer */
+				put_mouse_running((int)*mouse_x, (int)*mouse_y,
+						(int)*mouse_angle, mouse_total_time);
+				total_draw_time += DRAW_TIME;
+			}
+		}
+
+		if (total_dist >= dist)
+			return;
+		else {
+			while (total_dist < dist) {
+				mouse_total_time += TPERIOD;
+				delta_dist = (*mouse_speed * TPERIOD +
+				   0.5 * SEARCH_ACCEL * TPERIOD * TPERIOD);
+				total_dist += delta_dist;
+
+				if (*mouse_angle == 0.0)
+					*mouse_y += (delta_dist * SIMUL_DIST_RATE);
+				else if (*mouse_angle == 90.0)
+					*mouse_x += (delta_dist * SIMUL_DIST_RATE);
+				else if (*mouse_angle == 180.0)
+					*mouse_y -= (delta_dist * SIMUL_DIST_RATE);
+				else if (*mouse_angle == 270.0)
+					*mouse_x -= (delta_dist * SIMUL_DIST_RATE);
+
+				if (mouse_total_time >= total_draw_time + DRAW_TIME) {
+					put_mouse_running((int)*mouse_x, (int)*mouse_y,
+							(int)*mouse_angle, mouse_total_time);
+					total_draw_time += DRAW_TIME;
+				}
+			}
+		}
+
 		put_mouse_running((int)*mouse_x, (int)*mouse_y,
 			(int)*mouse_angle, mouse_total_time);
 	}
