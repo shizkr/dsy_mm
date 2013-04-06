@@ -287,6 +287,63 @@ static int diagonal_pattern_tree_verify(void)
 	return 0;
 }
 
+static int diagonal_pattern_node_remove(struct diagonal_node *node)
+{
+	int i, j, is_child, is_grandchild;
+
+	/* It's like single list and no way to know the parent node
+	 * from child node. So node itself can't be removed.
+	 * if input node doesn't have any child nodes it means it's top node.
+	 * It'll check child node and remove child node when there is
+	 * no grand children nodes.
+	 */
+	is_child = 0;
+	for (i=FD; i<=LD; i++) {
+		/* check child nodes */
+		if (node->link[i]) {
+			is_grandchild = 0;
+			for (j=FD; j<=LD; j++) {
+				if (node->link[i]->link[j])
+					is_grandchild++;
+			}
+
+			if (is_grandchild)
+				diagonal_pattern_node_remove(node->link[i]);
+			else {
+				mfree(node->link[i]);
+				node->link[i] = NULL;
+			}
+
+			is_child++;
+		}
+	}
+
+	return is_child;
+}
+void diagonal_pattern_tree_remove(void)
+{
+	struct diagonal_node *list = diagonal_node_tree_ptr;
+	int ret;
+
+	/* Allocate node and add to the list */
+	if (list == NULL) {
+		print_exit("%s list error!\n", __func__);
+	}
+
+	do {
+		ret = diagonal_pattern_node_remove(list);
+	} while (ret);
+
+	mfree(list);
+	diagonal_node_tree_ptr = NULL;
+
+/*
+#ifdef DEBUG_MEMORY
+	dump_alloc_memory_info();
+#endif
+*/
+}
+
 void diagonal_pattern_tree_init(unsigned int *load_time)
 {
 	struct diagonal_type *diag_item;

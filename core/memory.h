@@ -1,7 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#define MAX_BT_NODE_SIZE   20480
+#define MAX_BT_NODE_SIZE   512
 
 #ifdef DEBUG_MEMORY
 #define mmalloc(x) malloc_debug(x, __func__, __LINE__)
@@ -64,5 +64,6 @@ int circular_buffer_empty(struct circular_buffer *cb);
 #ifdef DEBUG_MEMORY
 void *malloc_debug(size_t size, const char *func, int line);
 void free_debug(void *ptr, const char *func, int line);
+void dump_alloc_memory_info(void);
 #endif
 #endif

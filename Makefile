@@ -1,8 +1,7 @@
 PKG_CONFIG=`pkg-config --cflags --libs gtk+-2.0`
 CC=/usr/bin/gcc -g -Wall
 CINCLUDE = -Icore -Isimulation
-CFLAGS = -DCONFIG_16X16 -DDISABLE_FULL_RETURN_SEARCH
-#-DDEBUG_MEMORY
+CFLAGS = -DCONFIG_16X16 -DDISABLE_FULL_RETURN_SEARCH -DDEBUG_MEMORY
 LDFLAGS=$(PKG_CONFIG) $(CFLAGS) $(CINCLUDE)
 
 all: gentable runsimul runsimul_gui

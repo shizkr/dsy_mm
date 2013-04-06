@@ -120,5 +120,13 @@ int main(int argc, char *argv[])
 #ifdef MAZE_GUI
 	gtk_main();
 #endif
+
+	/* destroy used resources */
+	mfree(maze_search);
+	diagonal_pattern_tree_remove();
+
+#ifdef DEBUG_MEMORY
+	dump_alloc_memory_info();
+#endif
 	exit(EXIT_SUCCESS);
 }

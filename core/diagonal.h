@@ -116,5 +116,5 @@ extern unsigned int load_time_1[];
 void diagonal_pattern_tree_init(unsigned int *load_time);
 struct diag_pttn_time_type *diagonal_pattern_search(unsigned char *pattern,
 		int pttn_size);
-
+void diagonal_pattern_tree_remove(void);
 #endif

@@ -8,8 +8,8 @@
 #include "debug.h"
 
 #ifdef DEBUG
-static int debug_flag = DEBUG_S_LINK;
-/* DEBUG_BINTREE */
+static int debug_flag;
+/* DEBUG_S_LINK, DEBUG_BINTREE */
 #endif
 
 #ifdef DEBUG
@@ -40,7 +40,7 @@ void *malloc_debug(size_t size, const char *func, int line)
 	if (max_alloc_size < memory_alloc_size)
 		max_alloc_size = memory_alloc_size;
 
-	printf("%s:%d:%s %08X s:%d max:%d\n",
+	print_dbg(DEBUG_MEM_ALLOC, "%s:%d:%s %08X s:%d max:%d\n",
 			func, line, __func__,
 			(unsigned int)ptr, memory_alloc_size,
 			max_alloc_size);
@@ -58,10 +58,16 @@ void free_debug(void *ptr, const char *func, int line)
 	}
 
 	memory_alloc_size -= head->size;
-	printf("%s:%d:%s: %08X s:%d\n",
+	print_dbg(DEBUG_MEM_ALLOC, "%s:%d:%s: %08X s:%d\n",
 			func, line, __func__,
 			(unsigned int)head, memory_alloc_size);
 	free(head);
+}
+
+void dump_alloc_memory_info(void)
+{
+	printf("total max mem: %d bytes\n", max_alloc_size);
+	printf("unfreed mem: %d bytes\n", memory_alloc_size);
 }
 #endif
 
