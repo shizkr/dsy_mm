@@ -1,7 +1,24 @@
 #!/bin/bash
 
-./simul ./maz/jap21_1.maz
-./simul ./maz/jap21_2.maz
-./simul ./maz/maze2003-1.maz
-./simul ./maz/maze2003.maz
+SIMUL=./runsimul
+FILES=maze.lst
 
+rm -f $FILES
+find . -name "*.maz" > $FILES
+find . -name "*.MAZ" >> $FILES
+
+while read line
+do
+	echo $line
+	$SIMUL "$line"
+	rc=$?
+	if [[ $rc != 0 ]]; then
+		echo .
+		echo "Micromouse simulation has failed!!!"
+		exit
+	fi
+done < $FILES
+
+rm -f $FILES
+
+exit

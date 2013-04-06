@@ -39,7 +39,7 @@ struct rectangle {
 	int yb;
 };
 
-void draw_full_maze(struct components *this, char *maze);
+void draw_full_maze(struct components *this, unsigned char *maze);
 void fill_wall(unsigned char index, unsigned char wall);
 
 #endif

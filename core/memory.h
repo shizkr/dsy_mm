@@ -1,7 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#define MAX_BT_NODE_SIZE   512
+#define MAX_BT_NODE_SIZE   20480
 
 #ifdef DEBUG_MEMORY
 #define mmalloc(x) malloc_debug(x, __func__, __LINE__)
@@ -46,8 +46,10 @@ struct s_link {
 };
 
 struct btree_node *bt_node_alloc(unsigned char pos, unsigned char abs_dir);
-void add_bt_node(struct btree_node *node, struct btree_node *new_node);
+void bt_node_free(struct btree_node *node);
+int add_bt_node(struct btree_node *node, struct btree_node *new_node);
 void free_bt_node_list(struct btree_node *head);
+
 struct s_link *s_link_alloc(struct btree_node *bt_node);
 void add_sl_node(struct s_link **list, struct s_link *node);
 void sl_node_free(struct s_link *head);

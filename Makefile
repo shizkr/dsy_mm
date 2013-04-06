@@ -1,11 +1,12 @@
 PKG_CONFIG=`pkg-config --cflags --libs gtk+-2.0`
 CC=/usr/bin/gcc -g -Wall
 CINCLUDE = -Icore -Isimulation
-CFLAGS = -DCONFIG_16X16 -DDEBUG
+CFLAGS = -DCONFIG_16X16 -DDISABLE_FULL_RETURN_SEARCH
 #-DDEBUG_MEMORY
 LDFLAGS=$(PKG_CONFIG) $(CFLAGS) $(CINCLUDE)
 
-all: runsimul gentable
+all: gentable runsimul runsimul_gui
+	@rm gentable
 core: core_simul gentable
 
 # core common files for simulator and real mouse
@@ -28,14 +29,18 @@ CORE_SIMUL = simulation/run_mouse.c \
 CORE_SIMUL_SRC = $(CORE_SIMUL) $(CORE_SRC)
 core_simul: $(CORE_SIMUL_SRC)
 	$(CC) $(CORE_SIMUL_SRC) -o simul $(LDFLAGS) -DDEBUG
-	@rm gentable
 PHONY += core_simul
 
 # graphical full simulator
 SIMUL_SRC = $(CORE_SIMUL) $(CORE_SRC) $(GUI_SRC)
+runsimul_gui: $(SIMUL_SRC)
+	$(CC) $(SIMUL_SRC) -o runsimul_gui $(LDFLAGS) -DMAZE_GUI
+PHONY += runsimul_gui
+
+# graphical full simulator
+SIMUL_SRC = $(CORE_SIMUL) $(CORE_SRC) $(GUI_SRC)
 runsimul: $(SIMUL_SRC)
-	$(CC) $(SIMUL_SRC) -o runsimul $(LDFLAGS) -DMAZE_GUI
-	@rm gentable
+	$(CC) $(SIMUL_SRC) -o runsimul $(LDFLAGS)
 PHONY += runsimul
 
 core/load_table.c: gentable

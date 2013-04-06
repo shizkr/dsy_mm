@@ -19,7 +19,7 @@ static int debug_flag = DEBUG_SEARCH;
 
 static gboolean timer_handler(gpointer data)
 {
-	char *maze_file = (char *)data;
+	unsigned char *maze_file = (unsigned char *)data;
 #ifdef DEBUG
 	static int count;
 #endif
@@ -31,7 +31,7 @@ static gboolean timer_handler(gpointer data)
 	return 1;
 }
 
-void run_timer(char *maze_file)
+void run_timer(unsigned char *maze_file)
 {
 #ifdef DEBUG
 	time_t t1, t2;

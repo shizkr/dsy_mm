@@ -27,9 +27,9 @@ static int debug_flag = DEBUG_BINTREE | DEBUG_S_LINK;
 #endif
 
 /* Input maze from file */
-char maze_file[MAZEMAX];
+unsigned char maze_file[MAZEMAX];
 
-int load_maze(char *filename, char *maze)
+int load_maze(char *filename, unsigned char *maze)
 {
 
 	FILE *fd = NULL;
@@ -50,6 +50,14 @@ int load_maze(char *filename, char *maze)
 	fclose(fd);
 	return 0;
 }
+
+#ifndef MAZE_GUI
+static void run_mouse(unsigned char *maze_file)
+{
+	while(simul_mouse_search_run(maze_file) < 2)
+			;
+}
+#endif
 
 int main(int argc, char *argv[])
 {
@@ -74,6 +82,10 @@ int main(int argc, char *argv[])
 	diagonal_pattern_tree_init(load_time_1);
 
 	print_info("Initialized maze\n");
+
+	maze_search = mmalloc(MAZEMAX);
+	memset(maze_search, 0, MAZEMAX);
+
 	initialize_maze(maze_search);
 	/* Make sure input file */
 	initialize_maze(maze_file);
@@ -86,6 +98,9 @@ int main(int argc, char *argv[])
 	draw_mouse(0, 0, 0);
 
 	run_timer(maze_file);
+#else
+	run_mouse(maze_file);
+	printf("Time: %d ms\n", get_total_path_time());
 #endif
 
 #ifdef CAL_PATHES

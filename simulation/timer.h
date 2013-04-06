@@ -5,6 +5,6 @@
 #define TIMER_S    ((double)TIMER_MS/1000.0)
 
 void timer_rearm(int msec);
-void run_timer(char *maze_file);
+void run_timer(unsigned char *maze_file);
 
 #endif

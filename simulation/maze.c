@@ -196,7 +196,7 @@ void gui_init(int argc, char *argv[])
 	show();
 }
 
-void init_draw_maze(char *maze)
+void init_draw_maze(unsigned char *maze)
 {
 	draw_full_maze(&this, maze);
 }

@@ -16,6 +16,6 @@ struct components {
 extern struct components this;
 
 void gui_init(int argc, char *argv[]);
-void init_draw_maze(char *maze);
+void init_draw_maze(unsigned char *maze);
 GdkGC *gui_set_color(char *color);
 #endif

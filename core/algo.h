@@ -48,6 +48,10 @@
 #define MAX_Y	16
 #endif
 
+/* These define path search type */
+#define MAZE_UNKNOWN_PATH   0
+#define MAZE_KNOWN_PATH     1
+
 /* direction bit through direction index */
 #define wall_bit(direct) (0x01 << (direct))
 
@@ -98,20 +102,20 @@ enum SEARCH_TYPE {
 	TO_START_32X32,
 };
 
-extern char maze_search[MAZEMAX];
-extern char contour_map[MAZEMAX];
+extern unsigned char *maze_search;
+extern unsigned char contour_map[MAZEMAX];
 
-void initialize_maze(char *maze);
-void print_map(char *map);
-void draw_contour(char *maze, char *map,
+void initialize_maze(unsigned char *maze);
+void print_map(unsigned char *map);
+void draw_contour(unsigned char *maze, unsigned char *map,
 		enum SEARCH_TYPE type, unsigned char pos);
-struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
+struct s_link *gen_bin_tree(unsigned char *maze, unsigned char *map, unsigned char pos_st,
 		unsigned char abs_dir);
 unsigned char *gen_frbl_from_node(struct s_link *sl_node);
 int get_diag_path_from_node(struct s_link *node, int *diag_path);
 int get_diag_path_from_turn(unsigned char *path, int *diag_path);
 int calculate_path_time(unsigned char *path);
-struct s_link *find_fastest_path(struct s_link *pathes);
+struct s_link *find_fastest_path(struct s_link *pathes, int known);
 void save_wallinfo_to_maze(unsigned char index, unsigned char wall);
 int is_goal(unsigned char index);
 void free_top_node_contour_tree(void);
@@ -120,5 +124,6 @@ unsigned int get_known_path_pos(struct s_link *sl_node);
 int is_known_path(struct s_link *sl_node);
 unsigned char *find_maze_fastest_path(
 	unsigned char cur_mouse_pos, char cur_mouse_dir,
-	unsigned int search_type, struct s_link **f_node);
+	unsigned int search_type, struct s_link **f_node, int fast_path_type);
+unsigned int get_total_path_time(void);
 #endif

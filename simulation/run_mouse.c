@@ -7,11 +7,11 @@
 #include "memory.h"
 #include "algo.h"
 #include "diagonal.h"
+#include "timer.h"
 
 #ifdef MAZE_GUI
 #include "draw_mouse.h"
 #include "draw_maze.h"
-#include "timer.h"
 #endif
 
 #define TAG "runmouse: "
@@ -26,8 +26,7 @@
  * Varialbles
  */
 #ifdef DEBUG
-static int debug_flag;
-/* = DEBUG_SEARCH; */
+static int debug_flag = DEBUG_SEARCH;
 #endif
 
 /* save current mouse position */
@@ -39,6 +38,7 @@ static unsigned char cur_mouse_dir = NI;
 double cur_mouse_x, cur_mouse_y, cur_mouse_angle, cur_mouse_speed;
 #endif
 
+#ifdef MAZE_GUI
 /* mouse upload time from start to goal and back to start.
  * mouse time is caculated every timer expiration.
  */
@@ -51,18 +51,19 @@ static double simul_timer_time;
 static void run_mouse_search(double *mouse_x, double *mouse_y,
 		double *mouse_angle, double *mouse_speed,
 		unsigned char mouse_pos, unsigned char direction);
+#endif
 
 /* Read maze block according to current mouse position and
  * direction. This has to be replaced in the real world.
  * index : mouse is assumed that it's already moved to next
  * blcok and read the wall information.
  */
-static unsigned char read_maze_block(char *maze_file, unsigned char index)
+static unsigned char read_maze_block(unsigned char *maze_file, unsigned char index)
 {
 	return maze_file[index];
 }
 
-static void simul_mouse_search_goal(char *maze_file,
+static void simul_mouse_search_goal(unsigned char *maze_file,
 		unsigned int search_type)
 {
 	struct s_link *f_node;
@@ -74,7 +75,7 @@ static void simul_mouse_search_goal(char *maze_file,
 	 * maze information. reurn array will have FRBL type.
 	 */
 	path_array = find_maze_fastest_path(cur_mouse_pos,
-			cur_mouse_dir, search_type, &f_node);
+			cur_mouse_dir, search_type, &f_node, MAZE_UNKNOWN_PATH);
 
 	/* smooth turn only at this point. Search run won't have diagonal
 	 * path run until certain point on my plan. Not so long.
@@ -138,7 +139,7 @@ static void simul_mouse_search_goal(char *maze_file,
 	free_top_node_contour_tree();
 }
 
-static void simul_mouse_search_return(char *maze_file)
+static void simul_mouse_search_return(unsigned char *maze_file)
 {
 	struct s_link *f_node;
 	unsigned char *path_array, wall, direction;
@@ -150,7 +151,10 @@ static void simul_mouse_search_return(char *maze_file)
 #elif defined(CONFIG_16X16)
 		TO_START_16X16;
 #endif
+
+#ifndef DISABLE_FULL_RETURN_SEARCH
 	unsigned int next_pos;
+#endif
 
 	/* return_type 0: search to start.
 	 *             1: next fastest path including unknow block.
@@ -164,7 +168,8 @@ static void simul_mouse_search_return(char *maze_file)
 	 * maze information. reurn array will have FRBL type.
 	 */
 	path_array = find_maze_fastest_path(cur_mouse_pos,
-			cur_mouse_dir, search_type, &f_node);
+			cur_mouse_dir, search_type, &f_node,
+			MAZE_UNKNOWN_PATH);
 
 #ifndef DISABLE_FULL_RETURN_SEARCH
 	/* Below is to handle return path to find fastest path */
@@ -175,7 +180,7 @@ static void simul_mouse_search_return(char *maze_file)
 		 * last block of the fastest path. Find another fastest path.
 		 */
 		if (is_known_path(f_node)) {
-			printf("%s:Known path\n", __func__);
+			print_info("%s:Known path Change target last\n", __func__);
 			next_pos = another_unknown_fastest_path();
 
 			/* mouse has to go next target block to Find
@@ -186,10 +191,11 @@ static void simul_mouse_search_return(char *maze_file)
 				search_type = next_pos;
 
 				path_array = find_maze_fastest_path(cur_mouse_pos,
-					cur_mouse_dir, search_type, &f_node);
+					cur_mouse_dir, search_type, &f_node,
+					MAZE_UNKNOWN_PATH);
 			} else {
 				path_array = find_maze_fastest_path(cur_mouse_pos,
-				cur_mouse_dir, search_type, &f_node);
+				cur_mouse_dir, search_type, &f_node, MAZE_UNKNOWN_PATH);
 			}
 		}
 		break;
@@ -199,6 +205,7 @@ static void simul_mouse_search_return(char *maze_file)
 	case 2:
 		/* Check to the goal */
 		if (is_known_path(f_node)) {
+			print_info("%s:Change target to start\n", __func__);
 			return_type = 0;
 			search_type =
 #if defined(CONFIG_4X4)
@@ -209,7 +216,7 @@ static void simul_mouse_search_return(char *maze_file)
 				TO_START_16X16;
 #endif
 			path_array = find_maze_fastest_path(cur_mouse_pos,
-				cur_mouse_dir, search_type, &f_node);
+				cur_mouse_dir, search_type, &f_node, MAZE_UNKNOWN_PATH);
 		}
 		break;
 	default:
@@ -273,12 +280,13 @@ static void simul_mouse_search_return(char *maze_file)
 	print_map(maze_search);
 
 	/* this must be called before starting new mapping.
-	 * it's to free contour tree nodes.
+	 * it's to free contois_known_pathur tree nodes.
 	 */
 	free_top_node_contour_tree();
 
 	/* Moved to next target position for search */
 	if (return_type == 1 && search_type == cur_mouse_pos) {
+		print_info("%s:Moved to next position, target goal\n", __func__);
 		search_type =
 #if defined(CONFIG_4X4)
 			TO_GOAL_4X4;
@@ -307,10 +315,11 @@ static void simul_mouse_search_return(char *maze_file)
  * All returns will check if there is other unknown fastest
  * path.
  */
-int simul_mouse_search_run(char *maze_file)
+int simul_mouse_search_run(unsigned char *maze_file)
 {
 	static char current_target;
 
+#ifdef MAZE_GUI
 	simul_timer_time += TIMER_S;
 
 	/* Draw mouse from the buffer */
@@ -321,7 +330,7 @@ int simul_mouse_search_run(char *maze_file)
 		/* draw mouse run from the footprint array */
 		return current_target;
 	}
-
+#endif
 	/* start looking for goal with search run */
 	if (current_target == 0) {
 		simul_mouse_search_goal(maze_file,
@@ -339,11 +348,12 @@ int simul_mouse_search_run(char *maze_file)
 		/* return to start with search run */
 		simul_mouse_search_return(maze_file);
 		if (cur_mouse_pos == 0) {
+#ifdef MAZE_GUI
 			/* Draw mouse from the buffer */
 			do {
 				simul_timer_time += TIMER_S;
 			} while (draw_mouse_running(simul_timer_time));
-
+#endif
 			return ++current_target;
 		}
 	}
@@ -351,9 +361,10 @@ int simul_mouse_search_run(char *maze_file)
 	return 0;
 }
 
+#ifdef MAZE_GUI
 #define DRAW_TIME   ((double)0.05) /* sec */
-#define SEARCH_TURN_VELOCITY    ((double)800.0)  /* mm/s */
-#define SEARCH_ACCEL            ((double)16000.0)  /* mm/s^2 */
+#define SEARCH_TURN_VELOCITY    ((double)900.0)  /* mm/s */
+#define SEARCH_ACCEL            ((double)15000.0)  /* mm/s^2 */
 #define SIMUL_DIST_RATE         ((double)BLOCK_LEN/(double)BLOCK)
 double total_draw_time;
 void run_mouse_search(double *mouse_x, double *mouse_y,
@@ -674,4 +685,4 @@ void run_mouse_search(double *mouse_x, double *mouse_y,
 	}
 }
 
-
+#endif

@@ -21,16 +21,15 @@
  * Varialbles
  */
 #ifdef DEBUG
-static int debug_flag;
-/* = DEBUG_SEARCH | DEBUG_BINTREE | DEBUG_S_LINK; */
+static int debug_flag = DEBUG_SEARCH | DEBUG_BINTREE | DEBUG_S_LINK;
 #endif
 
 /* circular ring buffer max definition */
 #define CONTOUR_CB_BUFFER_MAX   128
 
 /* Memorize maze information */
-char maze_search[MAZEMAX];
-char contour_map[MAZEMAX];
+unsigned char *maze_search;
+unsigned char contour_map[MAZEMAX];
 
 extern unsigned int *diagonal_weight_time_table;
 
@@ -47,7 +46,7 @@ static unsigned int contour_cb_buffer[CONTOUR_CB_BUFFER_MAX];
  */
 
 /* Initialize maze memory to have known maze information */
-void initialize_maze(char *maze)
+void initialize_maze(unsigned char *maze)
 {
 	int x, y;
 
@@ -72,7 +71,7 @@ void initialize_maze(char *maze)
 /* Draw maze information or contour map.
  * Map must be MAZEMAX bytes.
  */
-void print_map(char *map)
+void print_map(unsigned char *map)
 {
 	int x, y;
 
@@ -84,13 +83,13 @@ void print_map(char *map)
 	printf("\n");
 }
 #else
-void print_map(char *map) { }
+void print_map(unsigned char *map) { }
 #endif
 
 /* Draw maze information or contour map.
  * Map must be MAZEMAX bytes.
  */
-void print_full(char *map)
+void print_full(unsigned char *map)
 {
 	int x, y;
 
@@ -109,7 +108,7 @@ void print_full(char *map)
  *   type : maze type to run mouse
  *   pos  : current mouse location in the maze
  */
-void draw_contour(char *maze, char *map,
+void draw_contour(unsigned char *maze, unsigned char *map,
 		unsigned int type, unsigned char pos)
 {
 	int i, contour_lvl = 1;
@@ -202,7 +201,7 @@ void draw_contour(char *maze, char *map,
 	}
 }
 
-static int gen_bin_tree_tail(char *maze, char *map,
+static int gen_bin_tree_tail(unsigned char *maze, unsigned char *map,
 		struct s_link **head)
 {
 	struct btree_node *bt_new_node, *bt_node;
@@ -212,10 +211,12 @@ static int gen_bin_tree_tail(char *maze, char *map,
 	struct btree_node bt_node_backup;
 	char dir, is_goal = 0, found_node;
 
-	if (!maze || !map || !head || !*head)
-		print_exit("NULL pointer error! %X %X %X %X\n",
+	if (!maze || !map || !head || !*head) {
+		print_error("NULL pointer error! %X %X %X %X\n",
 				(unsigned int)maze, (unsigned int)map,
 				(unsigned int)head, (unsigned int)*head);
+		while (1);
+	}
 
 	print_dbg(DEBUG_S_LINK, "Check input linked list: %08X\n",
 			(unsigned int)*head);
@@ -254,7 +255,6 @@ static int gen_bin_tree_tail(char *maze, char *map,
 				}
 
 				found_node = 1;
-
 				/* create new bt_node and save next mouse index
 				 * and absolute direction of mouse at next block
 				 */
@@ -266,10 +266,15 @@ static int gen_bin_tree_tail(char *maze, char *map,
 				 */
 				bt_new_node->dir = dir;
 
-				add_bt_node(bt_node, bt_new_node);
-
-				sl_new_node = s_link_alloc(bt_new_node);
-				add_sl_node(&tail_new_list, sl_new_node);
+				/* there can be 3rd child, only take 2 child at
+				 * a time
+				 */
+				if (!add_bt_node(bt_node, bt_new_node)) {
+					sl_new_node = s_link_alloc(bt_new_node);
+					add_sl_node(&tail_new_list, sl_new_node);
+				} else {
+					bt_node_free(bt_new_node);
+				}
 
 				/*
 				 * debug_sl_node(tail_new_list);
@@ -357,8 +362,8 @@ void free_top_node_contour_tree(void)
  * map: contour maze array pointer
  * pos_st: current mouse position x/y 8 bit index
  */
-struct s_link *gen_bin_tree(char *maze, char *map, unsigned char pos_st,
-		unsigned char abs_dir)
+struct s_link *gen_bin_tree(unsigned char *maze, unsigned char *map,
+		unsigned char pos_st, unsigned char abs_dir)
 {
 	struct s_link *tail_list = NULL;
 #ifdef DEBUG
@@ -443,6 +448,7 @@ int is_known_path(struct s_link *sl_node)
 	while (bt_node->parent) {
 		if ((maze_search[bt_node->pos]&0xF0) != 0xF0)
 			return 0;
+
 		bt_node = bt_node->parent;
 	}
 	return 1;
@@ -493,7 +499,8 @@ unsigned int another_unknown_fastest_path(void)
 #elif defined(CONFIG_16X16)
 			TO_GOAL_16X16,
 #endif
-			&f_node);
+			&f_node,
+			MAZE_UNKNOWN_PATH);
 
 	if (is_known_path(f_node))
 		return 0;
@@ -702,14 +709,23 @@ int calculate_path_time(unsigned char *path)
 	return total_time;
 }
 
-struct s_link *find_fastest_path(struct s_link *pathes)
+/* input parameter known indicates whether this function will find
+ * the fastest path from all possible pathes including unknown blocks
+ * or known blocks only.
+ */
+struct s_link *find_fastest_path(struct s_link *pathes, int known)
 {
-	struct s_link *sl_node, *fast_sl_node;
+	struct s_link *sl_node, *fast_sl_node = NULL;
 	unsigned int total_time, fast_time = 0xffffffff;
 	unsigned char *path;
 
 	for (sl_node = pathes; sl_node; sl_node = sl_node->node) {
+		/* if known var is set, do not check unknown path */
+		if (known && !is_known_path(sl_node))
+			continue;
+
 		path = gen_frbl_from_node(sl_node);
+
 		/* back turn is assumed as FD to find the path */
 		if (*path == BD)
 			*path = FD;
@@ -723,9 +739,9 @@ struct s_link *find_fastest_path(struct s_link *pathes)
 		}
 	}
 
-	printf("Total_time: %dmS\n", fast_time);
+	print_info("Total_time: %dmS\n", fast_time);
 	if (fast_time == 0xffffffff)
-		print_exit("%s: Couldn't find the fastest path!\n",
+		print_error("%s: Couldn't find the fastest path!\n",
 				__func__);
 
 	return fast_sl_node;
@@ -801,10 +817,14 @@ int is_goal(unsigned char index)
  * if first turn is one of RBL, it means that the
  * mouse has to make back turn or smooth L/R turn.
  * In that case, no diagonal turns.
+ *
+ * fast_path_type: 0 find all possible pathes
+ *                 1 find from only known blocks
  */
 unsigned char *find_maze_fastest_path(
 	unsigned char cur_mouse_pos, char cur_mouse_dir,
-	unsigned int search_type, struct s_link **f_node)
+	unsigned int search_type, struct s_link **f_node,
+	int fast_path_type)
 {
 	unsigned char *path;
 	struct s_link *mouse_path;
@@ -812,6 +832,10 @@ unsigned char *find_maze_fastest_path(
 	int i;
 #endif
 
+	print_dbg(DEBUG_SEARCH, "mouse pos:%d,%d mouse_dir:%d "
+			"search_type:%d\n", pos_x(cur_mouse_pos),
+			pos_y(cur_mouse_pos), cur_mouse_dir,
+		        search_type);
 	/* draw contour map from the goal */
 	draw_contour(maze_search, contour_map,
 			search_type, cur_mouse_pos);
@@ -819,7 +843,10 @@ unsigned char *find_maze_fastest_path(
 	mouse_path = gen_bin_tree(maze_search,
 			contour_map, cur_mouse_pos, cur_mouse_dir);
 	/* find the fastest path and get the node */
-	*f_node = find_fastest_path(mouse_path);
+	*f_node = find_fastest_path(mouse_path, fast_path_type);
+
+	if (*f_node == NULL)
+		return NULL;
 
 	/* generate FRBL array for the fastest path */
 	path = gen_frbl_from_node(*f_node);
@@ -836,5 +863,56 @@ unsigned char *find_maze_fastest_path(
 #endif
 
 	return path;
+}
+
+/* This function returns total time from known blocks of maze
+ * at the end of search run. if there is no known path from searched maze
+ * then return value will be zero. Assume this function to be called
+ * with at least known one path froms tart to goal.
+ */
+unsigned int get_total_path_time(void)
+{
+	struct s_link *f_node;
+	unsigned char *path_array;
+	unsigned char *maze_backup;
+	int i;
+
+	maze_backup = mmalloc(MAZEMAX);
+	memcpy(maze_backup, maze_search, MAZEMAX);
+
+	for (i=0; i<MAZEMAX; i++) {
+		if (!(maze_search[i]&KNOWN_NORTH))
+			maze_search[i] |= NORTH;
+		if (!(maze_search[i]&KNOWN_EAST))
+			maze_search[i] |= EAST;
+		if (!(maze_search[i]&KNOWN_SOUTH))
+			maze_search[i] |= SOUTH;
+		if (!(maze_search[i]&KNOWN_WEST))
+			maze_search[i] |= WEST;
+
+		maze_search[i] |= 0xF0;
+	}
+
+	/* find next block from the algorithm based on current
+	 * maze information. reurn array will have FRBL type.
+	 */
+	path_array = find_maze_fastest_path(0, NI,
+#if defined(CONFIG_4X4)
+			TO_GOAL_4X4,
+#elif defined(CONFIG_8X8)
+			TO_GOAL_8X8,
+#elif defined(CONFIG_16X16)
+			TO_GOAL_16X16,
+#endif
+			&f_node,
+			MAZE_KNOWN_PATH);
+
+	memcpy(maze_search, maze_backup, MAZEMAX);
+	mfree(maze_backup);
+
+	if (path_array == NULL)
+	       return 0;
+
+	return calculate_path_time(gen_frbl_from_node(f_node));
 }
 

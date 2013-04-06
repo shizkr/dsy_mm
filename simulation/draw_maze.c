@@ -197,7 +197,7 @@ static void draw_full_poll(struct components *this)
 }
 
 void draw_full_maze(struct components *this,
-		char *maze)
+		unsigned char *maze)
 {
 	int i;
 

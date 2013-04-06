@@ -8,8 +8,8 @@
 #include "debug.h"
 
 #ifdef DEBUG
-static int debug_flag;
-/* = DEBUG_BINTREE; */
+static int debug_flag = DEBUG_S_LINK;
+/* DEBUG_BINTREE */
 #endif
 
 #ifdef DEBUG
@@ -88,7 +88,24 @@ struct btree_node *bt_node_alloc(unsigned char pos, unsigned char abs_dir)
 	return node;
 }
 
-void add_bt_node(struct btree_node *node, struct btree_node *new_node)
+void bt_node_free(struct btree_node *node)
+{
+	if (node == NULL)
+		print_exit("malloc failure!\n");
+
+#ifdef DEBUG
+	bt_node_cnt--;
+	print_dbg(DEBUG_BINTREE, "Free bt node %d\n",
+		bt_node_cnt);
+#endif
+	mfree(node);
+}
+
+/* nagative return means that there is more than 2 child on the contour
+ * block. It doesn't matter to find the fastest path and 2 is enough as
+ * rarely it has the case with known pathes.
+ */
+int add_bt_node(struct btree_node *node, struct btree_node *new_node)
 {
 	if (node->left == NULL) {
 		node->left = new_node;
@@ -97,8 +114,10 @@ void add_bt_node(struct btree_node *node, struct btree_node *new_node)
 		node->right = new_node;
 		new_node->parent = node;
 	} else {
-		print_exit("binary tree can only have 2 child node!!!");
+		print_info("binary tree can only have 2 child node!!!");
+		return -1;
 	}
+	return 0;
 }
 
 /* free the generated contour bin tree */
