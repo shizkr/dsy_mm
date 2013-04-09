@@ -76,6 +76,7 @@ char *turn_string[SL_MAX] = {
 	"SL_F13",
 	"SL_F14",
 	"SL_F15",
+	"SL_F16",
 	"SL_D2",
 	"SL_D3",
 	"SL_D4",
@@ -280,12 +281,12 @@ int gen_table(FILE *fd, int stage)
 		default:
 			time = 0;
 		}
-		/* f2 ~ f15 */
-		if (i >= 17 && i <= 29)
+		/* f2 ~ f16 */
+		if (i >= 17 && i <= 30)
 			time = forward_load(BLOCK*(i-15));
 		/* d2 ~ d27 */
-		if (i >= 30 && i <= 55)
-			time = forward_diagonal_load(DIAG_BLK*(i-28));
+		if (i >= 31 && i <= 56)
+			time = forward_diagonal_load(DIAG_BLK*(i-29));
 
 		fprintf(fd, "\t%d, /* %d, %s */\n", time, i, turn_string[i]);
 	}
@@ -312,7 +313,7 @@ int main(int argc, char *argv[])
 	print_info("FF took: %d mS\n", time);
 
 	/* forward */
-	for (i = 2; i < 16; i++) {
+	for (i = 2; i < 17; i++) {
 		time = forward_load((double)i*BLOCK);
 		print_info("%d BLOCK took: %d mS\n",
 				i, time);

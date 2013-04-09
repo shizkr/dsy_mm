@@ -1,7 +1,12 @@
 PKG_CONFIG=`pkg-config --cflags --libs gtk+-2.0`
 CC=/usr/bin/gcc -g -Wall
 CINCLUDE = -Icore -Isimulation
-CFLAGS = -DCONFIG_16X16 -DDEBUG_MEMORY -DDEBUG
+CFLAGS = -DCONFIG_16X16
+CFLAGS += -DDEBUG_MEMORY
+#CFLAGS += -DDEBUG
+# Limit memory size by reducing searching possible maze pathes
+CFLAGS += -DCONFIG_PATH_LIMIT
+
 LDFLAGS=$(PKG_CONFIG) $(CFLAGS) $(CINCLUDE)
 
 all: gentable runsimul runsimul_gui

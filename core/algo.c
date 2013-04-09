@@ -201,6 +201,30 @@ void draw_contour(unsigned char *maze, unsigned char *map,
 	}
 }
 
+/* clean bt_node tree while it's cleaning bt_node
+ */
+void clean_bin_tree(struct btree_node *node, int depth)
+{
+	struct btree_node *parent;
+
+	if (node->left || node->right || !depth)
+		return;
+
+	parent = node->parent;
+
+	if (!parent)
+		return;
+
+	if (parent->left == node)
+		parent->left = NULL;
+	if (parent->right == node)
+		parent->right = NULL;
+
+	bt_node_free(node);
+
+	clean_bin_tree(parent, --depth);
+}
+
 static int gen_bin_tree_tail(unsigned char *maze, unsigned char *map,
 		struct s_link **head)
 {
@@ -210,6 +234,9 @@ static int gen_bin_tree_tail(unsigned char *maze, unsigned char *map,
 	unsigned char i, index, abs_dir;
 	struct btree_node bt_node_backup;
 	char dir, is_goal = 0, found_node;
+#ifdef CONFIG_PATH_LIMIT
+	int path_limit = 0;
+#endif
 
 	if (!maze || !map || !head || !*head) {
 		print_error("NULL pointer error! %X %X %X %X\n",
@@ -272,6 +299,9 @@ static int gen_bin_tree_tail(unsigned char *maze, unsigned char *map,
 				if (!add_bt_node(bt_node, bt_new_node)) {
 					sl_new_node = s_link_alloc(bt_new_node);
 					add_sl_node(&tail_new_list, sl_new_node);
+#ifdef CONFIG_PATH_LIMIT
+					path_limit++;
+#endif
 				} else {
 					bt_node_free(bt_new_node);
 				}
@@ -295,10 +325,23 @@ static int gen_bin_tree_tail(unsigned char *maze, unsigned char *map,
 
 			sl_new_node = s_link_alloc(bt_new_node);
 			add_sl_node(&tail_new_list, sl_new_node);
+#ifdef CONFIG_PATH_LIMIT
+			path_limit++;
+#endif
 		}
+
+		/* Remove bt_node if there is no child, it'll search
+		 * parent node and remove the node if it had no child
+		 */
+		clean_bin_tree(bt_node, 100);
 
 		if (map[index] == 1 && !is_goal)
 			is_goal = 1;
+
+#ifdef CONFIG_PATH_LIMIT
+		if (path_limit >= 40)
+			break;
+#endif
 	}
 	if (tail_new_list)
 		debug_sl_node(tail_new_list);
@@ -459,23 +502,24 @@ int is_known_path(struct s_link *sl_node)
 unsigned int get_known_path_pos(struct s_link *sl_node)
 {
 	struct btree_node *bt_node;
-	char unknown = 0;
 	unsigned int ret_pos = 0;
+	unsigned int unknown = 0, unknown_pos = 0;
 
 	bt_node = sl_node->bt_node;
 
 	while (bt_node->parent) {
-		if ((maze_search[bt_node->pos]&0xF0) != 0xF0)
-			unknown = 1;
-		else {
-			if (unknown == 1)
+		if ((maze_search[bt_node->pos]&0xF0) != 0xF0) {
+			unknown =1;
+		        unknown_pos = bt_node->pos;
+		} else {
+			if (unknown)
 				ret_pos = (unsigned int)bt_node->pos;
 			unknown = 0;
 		}
 		bt_node = bt_node->parent;
 	}
 
-	return ret_pos;
+	return unknown_pos;
 }
 
 /* On return run of 1st running, search all the possible pathes.

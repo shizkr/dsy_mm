@@ -41,6 +41,7 @@ enum speed_load_enum {
 	SL_F13,
 	SL_F14,
 	SL_F15,
+	SL_F16,
 	SL_D2,
 	SL_D3,
 	SL_D4,

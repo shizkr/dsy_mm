@@ -1,3 +1,5 @@
-* Limit possible mouse known pathes
-   - Consider to be 20
+* TODO
+* Fix full maze file verification
+* Add max mem usage and unfreed memory size in shell script
 * Free all the used memories
+

@@ -91,6 +91,7 @@ unsigned int default_load_time[SL_MAX] = {
 	949, /* SL_F13 */
 	1014, /* SL_F14 */
 	1077, /* SL_F15 */
+	1087, /* SL_F16 */
 	136,  /* SL_D2 */
 	200,  /* SL_D3 */
 	263,  /* SL_D4 */
@@ -238,9 +239,9 @@ static int diagonal_pattern_tree_verify(void)
 			print_exit("Failed to find diagonal path pattern!!!\n");
 	}
 
-	/* Search forward path as maximum 15 */
+	/* Search forward path as maximum 16 */
 	memset(pattern, FD, sizeof(pattern));
-	for (idx = SL_F3, i = 3; idx <= SL_F15;
+	for (idx = SL_F3, i = 3; idx <= SL_F16;
 			idx++, i++) {
 		pttn = diagonal_pattern_search(pattern, i);
 		time = pttn->time;
@@ -375,7 +376,7 @@ void diagonal_pattern_tree_init(unsigned int *load_time)
 	if (diag_item == NULL)
 		print_exit("%s: malloc failure!\n", __func__);
 	diag_item->pttn = pattern;
-	for (idx = SL_F3, i = 3; idx <= SL_F15;
+	for (idx = SL_F3, i = 3; idx <= SL_F16;
 			idx++, i++) {
 		diag_item->size = i;
 

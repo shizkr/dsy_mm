@@ -1,7 +1,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-#define MAX_BT_NODE_SIZE   512
+#define MAX_BT_NODE_SIZE    256
 
 #ifdef DEBUG_MEMORY
 #define mmalloc(x) malloc_debug(x, __func__, __LINE__)
