@@ -196,6 +196,8 @@ void draw_contour(unsigned char *maze, unsigned char *map,
 
 	if (!found_mouse) {
 		/* Mouse alorighm should never hit this location */
+		print_map(map);
+		while (1);
 		print_exit("%s couldn't find mouse location\n",
 				__func__);
 	}

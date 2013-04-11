@@ -46,5 +46,8 @@ do
 done < $FILES
 
 rm -f $FILES
+rm -f $OUT
 
+# print the result
+output
 exit

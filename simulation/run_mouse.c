@@ -287,6 +287,7 @@ static void simul_mouse_search_return(unsigned char *maze_file)
 	/* Moved to next target position for search */
 	if (return_type == 1 && search_type == cur_mouse_pos) {
 		print_info("%s:Moved to next position, target goal\n", __func__);
+
 		search_type =
 #if defined(CONFIG_4X4)
 			TO_GOAL_4X4;
@@ -296,6 +297,21 @@ static void simul_mouse_search_return(unsigned char *maze_file)
 			TO_GOAL_16X16;
 #endif
 		return_type = 2;
+	}
+
+	/* It's exceptional case, when it's already in goal locaion */
+	if (return_type == 2 && is_goal(cur_mouse_pos)) {
+		print_info("%s:Changing to return type 0\n", __func__);
+
+		return_type = 0;
+		search_type =
+#if defined(CONFIG_4X4)
+			TO_START_4X4;
+#elif defined(CONFIG_8X8)
+			TO_START_8X8;
+#elif defined(CONFIG_16X16)
+			TO_START_16X16;
+#endif
 	}
 
 #ifdef MAZE_GUI

@@ -1,5 +1,3 @@
 * TODO
-* Fix full maze file verification
-* Add max mem usage and unfreed memory size in shell script
 * Free all the used memories
 
