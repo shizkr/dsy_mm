@@ -2,20 +2,46 @@
 
 SIMUL=./runsimul
 FILES=maze.lst
+OUT=runsimul.log
 
 rm -f $FILES
 find . -name "*.maz" > $FILES
 find . -name "*.MAZ" >> $FILES
 
+output(){
+	echo .
+	echo "=============================================="
+	echo "Max memory size: $MAX_MEM"
+	echo "Max Unfreed memory size: $MAX_UNFREED_MEM"
+	echo "=============================================="
+}
+
+MAX_MEM="0"
+MAX_UNFREED_MEM="0"
 while read line
 do
 	echo $line
-	$SIMUL "$line"
-	rc=$?
-	if [[ $rc != 0 ]]; then
+	$SIMUL "$line" | tee $OUT
+	rc=`cat $OUT | grep "" -c`
+	if [[ "$rc" == "1" ]]; then
 		echo .
 		echo "Micromouse simulation has failed!!!"
+		output
 		exit
+	fi
+
+	# Check max allocated memory size
+	max_mem_size=`cat $OUT | grep max | cut -b"16-30" | cut -f1 -d"b"`
+	if (( `expr $max_mem_size + 0` > `expr $MAX_MEM + 0` )); then
+		MAX_MEM="$max_mem_size"
+		#echo "Max memory size: $MAX_MEM"
+	fi
+
+	# Check max un-freed memory size
+	max_unfreed_mem_size=`cat $OUT | grep unfreed | cut -b"14-30" | cut -f1 -d"b"`
+	if (( `expr $max_unfreed_mem_size + 0` > `expr $MAX_UNFREED_MEM + 0` )); then
+		MAX_UNFREED_MEM="$max_unfreed_mem_size"
+		#echo "Max Unfreed memory size: $MAX_UNFREED_MEM"
 	fi
 done < $FILES
 
