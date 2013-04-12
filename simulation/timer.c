@@ -14,7 +14,8 @@
 #include "debug.h"
 
 #ifdef DEBUG
-static int debug_flag = DEBUG_SEARCH;
+static int debug_flag;
+/* = DEBUG_SEARCH; */
 #endif
 
 static gboolean timer_handler(gpointer data)

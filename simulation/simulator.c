@@ -23,7 +23,8 @@
  * Varialbles
  */
 #ifdef DEBUG
-static int debug_flag = DEBUG_BINTREE | DEBUG_S_LINK;
+static int debug_flag;
+/* = DEBUG_BINTREE | DEBUG_S_LINK; */
 #endif
 
 /* Input maze from file */
@@ -54,8 +55,11 @@ int load_maze(char *filename, unsigned char *maze)
 #ifndef MAZE_GUI
 static void run_mouse(unsigned char *maze_file)
 {
-	while(simul_mouse_search_run(maze_file) < 2)
+	/*
+	while (simul_mouse_search_run(maze_file) < 2)
 			;
+	*/
+	simul_mouse_search_run(maze_file);
 }
 #endif
 
@@ -100,7 +104,9 @@ int main(int argc, char *argv[])
 	run_timer(maze_file);
 #else
 	run_mouse(maze_file);
+	/*
 	printf("Time: %d ms\n", get_total_path_time());
+	*/
 #endif
 
 #ifdef CAL_PATHES

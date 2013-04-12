@@ -8,7 +8,7 @@
 #include "debug.h"
 
 #ifdef DEBUG
-static int debug_flag;
+static int debug_flag = DEBUG_MEM_ALLOC;
 /* DEBUG_S_LINK, DEBUG_BINTREE */
 #endif
 
@@ -20,30 +20,63 @@ static int s_link_cnt;
 
 #ifdef DEBUG_MEMORY
 #define MAGIC 0x3412ABCD
+#define MEM_DBG_NAME_MAX 20
 struct alloc_head {
+	struct alloc_head *next;
+	struct alloc_head *prev;
+	char func[MEM_DBG_NAME_MAX];
+	int line;
 	int size;
 	int magic;
+	int born;
 };
 
 static int memory_alloc_size;
 static int max_alloc_size;
+static struct alloc_head *list;
+static int born;
 
 void *malloc_debug(size_t size, const char *func, int line)
 {
 	struct alloc_head *ptr;
+	struct alloc_head *head;
 
 	memory_alloc_size += size;
 	ptr = malloc(size+sizeof(struct alloc_head));
 	ptr->size = size;
 	ptr->magic = MAGIC;
+	ptr->line = line;
+	ptr->born = ++born;
+	memcpy(ptr->func, func, MEM_DBG_NAME_MAX - 1);
+	ptr->func[MEM_DBG_NAME_MAX-1] = 0;
 
 	if (max_alloc_size < memory_alloc_size)
 		max_alloc_size = memory_alloc_size;
 
-	print_dbg(DEBUG_MEM_ALLOC, "%s:%d:%s %08X s:%d max:%d\n",
+	if (!list) {
+		list = ptr;
+		ptr->prev = NULL;
+		ptr->next = NULL;
+	} else  {
+		ptr->next = list;
+		ptr->prev = NULL;
+		list->prev = ptr;
+		list = ptr;
+	}
+
+	print_dbg(DEBUG_MEM_ALLOC, "%s:%d:%s %08X s:%d max:%d b:%d\n",
 			func, line, __func__,
 			(unsigned int)ptr, memory_alloc_size,
-			max_alloc_size);
+			max_alloc_size, born);
+
+#if 0
+	for (head = list, line = 0; head;
+		head = head->next, line++) {
+		printf("%s, line:%d, idx:%d\n", head->func,
+				head->line, line);
+	}
+#endif
+
 	return (void *)((unsigned int)ptr + sizeof(struct alloc_head));
 }
 
@@ -58,16 +91,47 @@ void free_debug(void *ptr, const char *func, int line)
 	}
 
 	memory_alloc_size -= head->size;
+
+	if (head->prev && head->next) {
+		head->prev->next = head->next;
+		head->next->prev = head->prev;
+	} else if (!head->prev && head->next) {
+		list = head->next;
+		list->prev = NULL;
+	} else if (head->prev && !head->next) {
+		head->prev->next = NULL;
+	} else {
+		list = NULL;
+	}
+
 	print_dbg(DEBUG_MEM_ALLOC, "%s:%d:%s: %08X s:%d\n",
 			func, line, __func__,
 			(unsigned int)head, memory_alloc_size);
 	free(head);
+
+#if 0
+	for (head = list, line = 0; head;
+		head = head->next, line++) {
+		printf("%s, line:%d, idx:%d\n", head->func,
+				head->line, line);
+	}
+#endif
 }
 
 void dump_alloc_memory_info(void)
 {
+	struct alloc_head *head;
+	int line;
+
 	printf("total max mem: %d bytes\n", max_alloc_size);
 	printf("unfreed mem: %d bytes\n", memory_alloc_size);
+#if 1
+	for (head = list, line = 0; head;
+		head = head->next, line++) {
+		printf("%s, line:%d, idx:%d born:%d\n", head->func,
+				head->line, line, head->born);
+	}
+#endif
 }
 #endif
 
@@ -252,7 +316,8 @@ inline void circular_buffer_read(struct circular_buffer *cb, unsigned int *item)
 	cb->start = (cb->start + 1) % cb->size;
 }
 
-inline void circular_buffer_write(struct circular_buffer *cb, unsigned  int item)
+inline void circular_buffer_write(
+		struct circular_buffer *cb, unsigned  int item)
 {
 	cb->items[cb->end] = item;
 	cb->end = (cb->end + 1) % cb->size;

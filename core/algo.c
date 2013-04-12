@@ -21,7 +21,8 @@
  * Varialbles
  */
 #ifdef DEBUG
-static int debug_flag = DEBUG_SEARCH | DEBUG_BINTREE | DEBUG_S_LINK;
+static int debug_flag;
+/* = DEBUG_SEARCH | DEBUG_BINTREE | DEBUG_S_LINK; */
 #endif
 
 /* circular ring buffer max definition */
@@ -197,7 +198,6 @@ void draw_contour(unsigned char *maze, unsigned char *map,
 	if (!found_mouse) {
 		/* Mouse alorighm should never hit this location */
 		print_map(map);
-		while (1);
 		print_exit("%s couldn't find mouse location\n",
 				__func__);
 	}
@@ -244,7 +244,6 @@ static int gen_bin_tree_tail(unsigned char *maze, unsigned char *map,
 		print_error("NULL pointer error! %X %X %X %X\n",
 				(unsigned int)maze, (unsigned int)map,
 				(unsigned int)head, (unsigned int)*head);
-		while (1);
 	}
 
 	print_dbg(DEBUG_S_LINK, "Check input linked list: %08X\n",
@@ -504,20 +503,14 @@ int is_known_path(struct s_link *sl_node)
 unsigned int get_known_path_pos(struct s_link *sl_node)
 {
 	struct btree_node *bt_node;
-	unsigned int ret_pos = 0;
-	unsigned int unknown = 0, unknown_pos = 0;
+	unsigned int unknown_pos = 0;
 
 	bt_node = sl_node->bt_node;
 
 	while (bt_node->parent) {
-		if ((maze_search[bt_node->pos]&0xF0) != 0xF0) {
-			unknown =1;
-		        unknown_pos = bt_node->pos;
-		} else {
-			if (unknown)
-				ret_pos = (unsigned int)bt_node->pos;
-			unknown = 0;
-		}
+		if ((maze_search[bt_node->pos]&0xF0) != 0xF0)
+			unknown_pos = bt_node->pos;
+
 		bt_node = bt_node->parent;
 	}
 
@@ -532,12 +525,11 @@ unsigned int get_known_path_pos(struct s_link *sl_node)
 unsigned int another_unknown_fastest_path(void)
 {
 	struct s_link *f_node;
-	unsigned char *path_array;
 
 	/* find next block from the algorithm based on current
 	 * maze information. reurn array will have FRBL type.
 	 */
-	path_array = find_maze_fastest_path(0, NI,
+	(void)find_maze_fastest_path(0, NI,
 #if defined(CONFIG_4X4)
 			TO_GOAL_4X4,
 #elif defined(CONFIG_8X8)
@@ -957,7 +949,7 @@ unsigned int get_total_path_time(void)
 	mfree(maze_backup);
 
 	if (path_array == NULL)
-	       return 0;
+		return 0;
 
 	return calculate_path_time(gen_frbl_from_node(f_node));
 }
