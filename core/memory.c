@@ -8,8 +8,8 @@
 #include "debug.h"
 
 #ifdef DEBUG
-static int debug_flag = DEBUG_MEM_ALLOC;
-/* DEBUG_S_LINK, DEBUG_BINTREE */
+static int debug_flag;
+/* = DEBUG_MEM_ALLOC | DEBUG_S_LINK | DEBUG_BINTREE; */
 #endif
 
 #ifdef DEBUG
@@ -39,7 +39,6 @@ static int born;
 void *malloc_debug(size_t size, const char *func, int line)
 {
 	struct alloc_head *ptr;
-	struct alloc_head *head;
 
 	memory_alloc_size += size;
 	ptr = malloc(size+sizeof(struct alloc_head));

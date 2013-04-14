@@ -26,7 +26,8 @@
  * Varialbles
  */
 #ifdef DEBUG
-static int debug_flag = DEBUG_SEARCH;
+static int debug_flag;
+/* = DEBUG_SEARCH; */
 #endif
 
 /* save current mouse position */
@@ -66,7 +67,7 @@ static unsigned char read_maze_block(unsigned char *maze_file, unsigned char ind
 static void simul_mouse_search_goal(unsigned char *maze_file,
 		unsigned int search_type)
 {
-	struct s_link *f_node;
+	struct s_link f_node;
 	unsigned char *path_array, wall, direction;
 
 	print_dbg(DEBUG_SEARCH, "%s\n", __func__);
@@ -141,7 +142,7 @@ static void simul_mouse_search_goal(unsigned char *maze_file,
 
 static void simul_mouse_search_return(unsigned char *maze_file)
 {
-	struct s_link *f_node;
+	struct s_link f_node;
 	unsigned char *path_array, wall, direction;
 	static unsigned int search_type =
 #if defined(CONFIG_4X4)
@@ -179,7 +180,7 @@ static void simul_mouse_search_return(unsigned char *maze_file)
 		 * there is another fastest path, then go to the known
 		 * last block of the fastest path. Find another fastest path.
 		 */
-		if (is_known_path(f_node)) {
+		if (is_known_path(&f_node)) {
 			print_info("%s:Known path Change target last\n", __func__);
 			next_pos = another_unknown_fastest_path();
 
@@ -204,7 +205,7 @@ static void simul_mouse_search_return(unsigned char *maze_file)
 		break;
 	case 2:
 		/* Check to the goal */
-		if (is_known_path(f_node)) {
+		if (is_known_path(&f_node)) {
 			print_info("%s:Change target to start\n", __func__);
 			return_type = 0;
 			search_type =

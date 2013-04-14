@@ -331,13 +331,14 @@ static int gen_bin_tree_tail(unsigned char *maze, unsigned char *map,
 #endif
 		}
 
+		if (map[index] == 1 && !is_goal)
+			is_goal = 1;
+
 		/* Remove bt_node if there is no child, it'll search
 		 * parent node and remove the node if it had no child
 		 */
-		clean_bin_tree(bt_node, 100);
-
-		if (map[index] == 1 && !is_goal)
-			is_goal = 1;
+		if (!is_goal)
+			clean_bin_tree(bt_node, 100);
 
 #ifdef CONFIG_PATH_LIMIT
 		if (path_limit >= 40)
@@ -460,7 +461,8 @@ struct s_link *gen_bin_tree(unsigned char *maze, unsigned char *map,
 			if (bt_node->dir <= LD)
 				path[idx--] = bt_node->dir;
 			else
-				print_exit("Invalid direction in bt_node!\n");
+				print_exit("Invalid direction in bt_node! %d\n",
+						bt_node->dir);
 			bt_node = bt_node->parent;
 		}
 
@@ -524,7 +526,7 @@ unsigned int get_known_path_pos(struct s_link *sl_node)
  */
 unsigned int another_unknown_fastest_path(void)
 {
-	struct s_link *f_node;
+	struct s_link f_node;
 
 	/* find next block from the algorithm based on current
 	 * maze information. reurn array will have FRBL type.
@@ -540,11 +542,11 @@ unsigned int another_unknown_fastest_path(void)
 			&f_node,
 			MAZE_UNKNOWN_PATH);
 
-	if (is_known_path(f_node))
+	if (is_known_path(&f_node))
 		return 0;
 
 	/* return next target position */
-	return get_known_path_pos(f_node);
+	return get_known_path_pos(&f_node);
 }
 
 unsigned char *gen_frbl_from_node(struct s_link *sl_node)
@@ -861,15 +863,18 @@ int is_goal(unsigned char index)
  */
 unsigned char *find_maze_fastest_path(
 	unsigned char cur_mouse_pos, char cur_mouse_dir,
-	unsigned int search_type, struct s_link **f_node,
+	unsigned int search_type, struct s_link *f_node,
 	int fast_path_type)
 {
 	unsigned char *path;
 	struct s_link *mouse_path;
+	struct s_link *sl_fast_path;
 #ifdef DEBUG
 	int i;
 #endif
 
+	if (!f_node)
+		print_exit("f_node NULL\n");
 	print_dbg(DEBUG_SEARCH, "mouse pos:%d,%d mouse_dir:%d "
 			"search_type:%d\n", pos_x(cur_mouse_pos),
 			pos_y(cur_mouse_pos), cur_mouse_dir,
@@ -881,13 +886,21 @@ unsigned char *find_maze_fastest_path(
 	mouse_path = gen_bin_tree(maze_search,
 			contour_map, cur_mouse_pos, cur_mouse_dir);
 	/* find the fastest path and get the node */
-	*f_node = find_fastest_path(mouse_path, fast_path_type);
+	sl_fast_path = find_fastest_path(mouse_path, fast_path_type);
 
-	if (*f_node == NULL)
+	if (sl_fast_path) {
+
+		memcpy(f_node, sl_fast_path, sizeof(struct s_link));
+
+		/* Free sl_nodes after searching the fastest path */
+		sl_node_free(mouse_path);
+	} else {
+		sl_node_free(mouse_path);
 		return NULL;
+	}
 
 	/* generate FRBL array for the fastest path */
-	path = gen_frbl_from_node(*f_node);
+	path = gen_frbl_from_node(f_node);
 
 #ifdef DEBUG
 	printf("%s\n", __func__);
@@ -910,9 +923,10 @@ unsigned char *find_maze_fastest_path(
  */
 unsigned int get_total_path_time(void)
 {
-	struct s_link *f_node;
+	struct s_link f_node;
 	unsigned char *path_array;
 	unsigned char *maze_backup;
+	unsigned int time = 0;
 	int i;
 
 	maze_backup = mmalloc(MAZEMAX);
@@ -949,8 +963,12 @@ unsigned int get_total_path_time(void)
 	mfree(maze_backup);
 
 	if (path_array == NULL)
-		return 0;
+		goto error;
 
-	return calculate_path_time(gen_frbl_from_node(f_node));
+	time = calculate_path_time(gen_frbl_from_node(&f_node));
+error:
+	free_top_node_contour_tree();
+
+	return time;
 }
 

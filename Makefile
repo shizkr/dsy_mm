@@ -3,7 +3,7 @@ CC=/usr/bin/gcc -g -Wall
 CINCLUDE = -Icore -Isimulation
 CFLAGS = -DCONFIG_16X16
 CFLAGS += -DDEBUG_MEMORY
-CFLAGS += -DDEBUG
+#CFLAGS += -DDEBUG
 # Limit memory size by reducing searching possible maze pathes
 CFLAGS += -DCONFIG_PATH_LIMIT
 

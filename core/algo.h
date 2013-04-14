@@ -124,6 +124,6 @@ unsigned int get_known_path_pos(struct s_link *sl_node);
 int is_known_path(struct s_link *sl_node);
 unsigned char *find_maze_fastest_path(
 	unsigned char cur_mouse_pos, char cur_mouse_dir,
-	unsigned int search_type, struct s_link **f_node, int fast_path_type);
+	unsigned int search_type, struct s_link *f_node, int fast_path_type);
 unsigned int get_total_path_time(void);
 #endif
