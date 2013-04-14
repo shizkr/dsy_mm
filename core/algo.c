@@ -338,10 +338,14 @@ static int gen_bin_tree_tail(unsigned char *maze, unsigned char *map,
 		 * parent node and remove the node if it had no child
 		 */
 		if (!is_goal)
-			clean_bin_tree(bt_node, 100);
+			clean_bin_tree(bt_node, 80);
 
 #ifdef CONFIG_PATH_LIMIT
-		if (path_limit >= 40)
+		/* 10 pathes : max 20KB
+		 * 20 pathes : max 30 KB
+		 * 40 pathes : max 57 KB
+		 */
+		if (path_limit >= 20)
 			break;
 #endif
 	}
