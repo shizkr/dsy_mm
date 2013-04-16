@@ -8,9 +8,12 @@ rm -f $FILES
 find . -name "*.maz" > $FILES
 find . -name "*.MAZ" >> $FILES
 
+maze_file_cnt=`cat $FILES | grep "" -c`
+
 output(){
 	echo .
 	echo "=============================================="
+	echo "Total input maz files: $maze_file_cnt"
 	echo "Max memory size: $MAX_MEM"
 	echo "Max Unfreed memory size: $MAX_UNFREED_MEM"
 	echo "=============================================="
