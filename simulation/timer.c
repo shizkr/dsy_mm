@@ -9,6 +9,7 @@
 #include "run_mouse.h"
 #include "draw_mouse.h"
 #include "timer.h"
+#include "maze.h"
 
 #define TAG "timer: "
 #include "debug.h"
@@ -26,7 +27,10 @@ static gboolean timer_handler(gpointer data)
 #endif
 
 	print_dbg(DEBUG_SEARCH, "=>timer expired %d times\n", ++count);
-	if (simul_mouse_search_run(maze_file) == 2)
+	if (simul_mouse_search_run(maze_file) >= 2)
+		return 0;
+
+	if (get_mouse_run_gui_state() != MOUSE_RUNNING)
 		return 0;
 
 	return 1;

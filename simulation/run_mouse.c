@@ -373,6 +373,8 @@ int simul_mouse_search_run(unsigned char *maze_file)
 #endif
 			return ++current_target;
 		}
+	} else {
+		return current_target;
 	}
 
 	return 0;

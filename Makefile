@@ -22,12 +22,12 @@ CORE_SRC = core/memory.c \
 # it's for GUI simulation program only
 GUI_SRC = simulation/maze.c \
 		  simulation/draw_maze.c \
-		  simulation/draw_mouse.c
+		  simulation/draw_mouse.c \
+		  simulation/timer.c
 
 # it's for non-GUI simulation program only
 CORE_SIMUL = simulation/run_mouse.c \
-			 simulation/simulator.c \
-			 simulation/timer.c
+			 simulation/simulator.c
 
 # simulation for core algorithm
 CORE_SIMUL_SRC = $(CORE_SIMUL) $(CORE_SRC)
@@ -36,13 +36,13 @@ core_simul: $(CORE_SIMUL_SRC)
 PHONY += core_simul
 
 # graphical full simulator
-SIMUL_SRC = $(CORE_SIMUL) $(CORE_SRC) $(GUI_SRC)
-runsimul_gui: $(SIMUL_SRC)
-	$(CC) $(SIMUL_SRC) -o runsimul_gui $(LDFLAGS) -DMAZE_GUI
+SIMUL_GUI_SRC = $(CORE_SIMUL) $(CORE_SRC) $(GUI_SRC)
+runsimul_gui: $(SIMUL_GUI_SRC)
+	$(CC) $(SIMUL_GUI_SRC) -o runsimul_gui $(LDFLAGS) -DMAZE_GUI
 PHONY += runsimul_gui
 
 # graphical full simulator
-SIMUL_SRC = $(CORE_SIMUL) $(CORE_SRC) $(GUI_SRC)
+SIMUL_SRC = $(CORE_SIMUL) $(CORE_SRC)
 runsimul: $(SIMUL_SRC)
 	$(CC) $(SIMUL_SRC) -o runsimul $(LDFLAGS)
 PHONY += runsimul

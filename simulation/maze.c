@@ -4,17 +4,37 @@
 #include "draw_maze.h"
 
 struct components this;
+static int mouse_state;
 
-static void next_handler(GtkWidget *widget,
-                   gpointer data)
+extern void run_mouse(void);
+
+int get_mouse_run_gui_state(void)
 {
-    g_print ("next %s \n", (gchar *)data);
+	return mouse_state;
 }
 
-static void previous_handler(GtkWidget *widget,
+void set_mouse_run_gui_state(int state)
+{
+	mouse_state = state;
+}
+
+static void start_handler(GtkWidget *widget,
                    gpointer data)
 {
-    g_print ("previous %s \n", (gchar *)data);
+	if (mouse_state == MOUSE_INIT || mouse_state == MOUSE_STOP) {
+		g_print ("run mouse %s\n", (gchar *)data);
+		mouse_state = MOUSE_RUNNING;
+		run_mouse();
+	} else {
+		g_print ("Running...\n");
+	}
+}
+
+static void stop_handler(GtkWidget *widget,
+                   gpointer data)
+{
+	g_print ("Stop %s \n", (gchar *)data);
+	mouse_state = MOUSE_STOP;
 }
 
 static gboolean delete_event( GtkWidget *widget,
@@ -47,11 +67,11 @@ static void createWindow() {
 
 
 static void createButtons() {
-    this.next = gtk_button_new_with_label ("Next");
-    this.previous = gtk_button_new_with_label ("Previous");
+    this.start = gtk_button_new_with_label ("Start");
+    this.stop = gtk_button_new_with_label ("Stop");
 
-    g_signal_connect (G_OBJECT (this.next), "clicked", G_CALLBACK (next_handler), NULL);
-    g_signal_connect (G_OBJECT (this.previous), "clicked", G_CALLBACK (previous_handler), NULL);
+    g_signal_connect (G_OBJECT (this.start), "clicked", G_CALLBACK (start_handler), NULL);
+    g_signal_connect (G_OBJECT (this.stop), "clicked", G_CALLBACK (stop_handler), NULL);
 
 }
 
@@ -64,8 +84,8 @@ static void layoutWidgets() {
 
 
     /* Add the buttons to the graph navigation panel. */
-    gtk_box_pack_start (GTK_BOX(this.graphNavigationPanel), this.previous, TRUE, TRUE, 0);
-    gtk_box_pack_start (GTK_BOX(this.graphNavigationPanel), this.next,     TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX(this.graphNavigationPanel), this.start, TRUE, TRUE, 0);
+    gtk_box_pack_start (GTK_BOX(this.graphNavigationPanel), this.stop,     TRUE, TRUE, 0);
 
 
     /*Add the graph navigation panel to the main panel. */
@@ -78,8 +98,8 @@ static void show()
 {
 	gtk_widget_show(this.drawingArea);
 	gtk_widget_show(this.mainPanel);
-	gtk_widget_show(this.next);
-	gtk_widget_show(this.previous);
+	gtk_widget_show(this.start);
+	gtk_widget_show(this.stop);
 	gtk_widget_show(this.graphNavigationPanel);
 	gtk_widget_show(this.window);
 }
